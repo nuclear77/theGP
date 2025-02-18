@@ -1,0 +1,21 @@
+---
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+
+- name: Ensure Docker service is enabled and running
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Copy docker-compose.yml for monitoring stack
+  copy:
+    src: files/docker-compose.yml
+    dest: /opt/monitoring/docker-compose.yml
+
+- name: Start monitoring stack using docker-compose
+  command:
+    cmd: docker-compose up -d
+    chdir: /opt/monitoring

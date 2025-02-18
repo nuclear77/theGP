@@ -1,0 +1,38 @@
+---
+- name: Install dependencies for GitLab Runner
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - curl
+    - ca-certificates
+
+- name: Add GitLab Runner repository
+  apt_key:
+    url: https://packages.gitlab.com/runner/gitlab-runner/gpgkey
+    state: present
+
+- name: Add GitLab Runner repository to sources list
+  apt_repository:
+    repo: "deb https://packages.gitlab.com/runner/gitlab-runner/ubuntu/ {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Install GitLab Runner
+  apt:
+    name: gitlab-runner
+    state: present
+
+- name: Register GitLab Runner
+  command:
+    cmd: >
+      gitlab-runner register
+      --non-interactive
+      --url "{{ gitlab_url }}"
+      --registration-token "{{ gitlab_token }}"
+      --executor "docker"
+      --docker-image "docker:20.10.16"
+      --description "GitLab Runner on {{ ansible_hostname }}"
+      --tag-list "docker"
+      --run-untagged "true"
+      --locked "false"
+  when: gitlab_token is defined

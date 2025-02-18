@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - gitlab_runner
+    - monitoring
+    - app
+  tasks:
+    - name: app.py
+      become: true
+      systemd:
+        name: flask_app
+        state: restarted
+        enabled: true
+        daemon_reload: true
