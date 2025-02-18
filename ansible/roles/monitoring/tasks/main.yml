@@ -1,21 +1,17 @@
----
 - name: Install Docker
   apt:
     name: docker.io
     state: present
 
-- name: Ensure Docker service is enabled and running
-  service:
-    name: docker
-    state: started
-    enabled: true
+- name: Start Prometheus container
+  docker_container:
+    name: prometheus
+    image: prom/prometheus
+    ports: "9090:9090"
+    volumes: "{{ playbook_dir }}/templates/prometheus.yml:/etc/prometheus/prometheus.yml"
 
-- name: Copy docker-compose.yml for monitoring stack
-  copy:
-    src: files/docker-compose.yml
-    dest: /opt/monitoring/docker-compose.yml
-
-- name: Start monitoring stack using docker-compose
-  command:
-    cmd: docker-compose up -d
-    chdir: /opt/monitoring
+- name: Start Grafana container
+  docker_container:
+    name: grafana
+    image: grafana/grafana
+    ports: "3000:3000"

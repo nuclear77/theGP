@@ -2,7 +2,7 @@
 - hosts: all
   become: true
   roles:
-    - gitlab_runner
+    - jenkins
     - monitoring
     - app
   tasks:

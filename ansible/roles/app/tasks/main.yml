@@ -1,33 +1,14 @@
----
-- name: Install Docker
-  apt:
-    name: docker.io
-    state: present
+- name: Clone app repository
+  git:
+    repo: "*"
+    dest: /opt/app
 
-- name: Ensure Docker service is enabled and running
-  service:
-    name: docker
+- name: Install dependencies
+  pip:
+    requirements: /opt/app/requirements.txt
+
+- name: Start Gunicorn service
+  systemd:
+    name: gunicorn
     state: started
-    enabled: true
-
-- name: Copy application files
-  copy:
-    src: "{{ item }}"
-    dest: /opt/app/
-  with_items:
-    - files/requirements.txt
-    - files/Dockerfile
-
-- name: Build Docker image for the app
-  command:
-    cmd: docker build -t diploma_app .
-    chdir: /opt/app
-
-- name: Run application container
-  docker_container:
-    name: diploma_app
-    image: diploma_app
-    state: started
-    ports:
-      - "3000:3000"
-    restart_policy: always
+    enabled: yes
