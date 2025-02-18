@@ -1,2 +1,11 @@
-[all]
-localhost ansible_connection=local
+all:
+  vars:
+    ansible_user: admin
+    default_port: 8080
+  hosts:
+    localhost:
+      ansible_connection: local
+      service_user: "appuser"
+      app_port: 8000
+      app_path: "/opt/app"
+      app_src_path: "{{ app_path }}/app/src"

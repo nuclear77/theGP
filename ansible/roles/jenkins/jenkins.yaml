@@ -1,0 +1,8 @@
+jenkins:
+  plugins:
+    - workflow-support:944.v5a_859593b_98a_
+    - bouncycastle-api:2.30.1.78.1-248.ve27176eb_46cb_
+    - workflow-cps:4011.v91e9951fa_d5b_
+    - branch-api:2.1202.vc51412f3ed84
+    - cloudbees-folder:6.975.v4161e479479f
+    - workflow-job:1472.ve4d5eca_143c4

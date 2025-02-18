@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git '*'
+                git 'https://github.com/nuclear77/theGP.git'
             }
         }
         stage('Test') {
@@ -15,8 +15,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 ansiblePlaybook(
-                    playbook: 'ansible/playbook.yml',
-                    inventory: 'ansible/inventory.yml'
+                    playbook: 'playbook.yml',
+                    inventory: 'inventory.yml'
                 )
             }
         }

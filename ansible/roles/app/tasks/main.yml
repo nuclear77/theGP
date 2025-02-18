@@ -1,14 +1,95 @@
-- name: Clone app repository
-  git:
-    repo: "*"
+---
+- name: Установка зависимостей Python
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+      - python3-dev
+      - build-essential
+    state: present
+    update_cache: yes
+
+- name: Создание пользователя appuser
+  ansible.builtin.user:
+    name: "{{ service_user | default('appuser') }}"
+    system: yes
+    create_home: no
+    shell: /usr/sbin/nologin
+  tags: app-setup
+
+- name: Создание базового каталога
+  ansible.builtin.file:
+    path: /opt/app
+    state: directory
+    mode: 0755
+
+- name: Установка прав на каталог
+  ansible.builtin.file:
+    path: /opt/app
+    owner: "{{ service_user | default('appuser') }}"
+    group: "{{ service_user | default('appuser') }}"
+    mode: 0755
+  tags: app-code
+
+- name: Настройка безопасного каталога для Git
+  ansible.builtin.command:
+    cmd: git config --global --add safe.directory /opt/app
+  become: yes
+  tags: app-code
+
+- name: Клонирование репозитория
+  ansible.builtin.git:
+    repo: "https://github.com/nuclear77/theGP.git"
     dest: /opt/app
+    version: main
+    force: yes
+  tags: app-code
 
-- name: Install dependencies
-  pip:
+- name: Установка python3-full
+  ansible.builtin.apt:
+    name: python3-full
+    state: present
+    update_cache: yes
+  tags: python-deps
+
+- name: Создание виртуального окружения
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/app/venv
+    creates: /opt/app/venv/bin/activate
+  tags: venv
+
+- name: Установка зависимостей
+  ansible.builtin.pip:
     requirements: /opt/app/requirements.txt
+    virtualenv: /opt/app/venv
+    virtualenv_command: python3 -m venv
+  tags: deps
 
-- name: Start Gunicorn service
-  systemd:
-    name: gunicorn
+- name: Инициализация venv
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/app/venv
+    creates: /opt/app/venv/bin/activate
+
+- name: Установка пакетов
+  ansible.builtin.pip:
+    requirements: /opt/app/requirements.txt
+    virtualenv: /opt/app/venv
+    state: present
+
+
+- name: Активация сервиса
+  ansible.builtin.systemd:
+    name: flask-app
     state: started
     enabled: yes
+    daemon_reload: yes
+
+- name: Развертывание кода
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/app/src/"
+    dest: /opt/app/src
+    owner: "{{ service_user | default('appuser') }}"
+    group: "{{ service_user | default('appuser') }}"
+    mode: 0755
+    remote_src: no
