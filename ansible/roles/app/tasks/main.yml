@@ -40,10 +40,13 @@
 
 - name: Клонирование репозитория
   ansible.builtin.git:
-    repo: "https://github.com/nuclear77/theGP.git"
+    repo: https://github.com/nuclear77/theGP.git
     dest: /opt/app
-    version: main
+    version: "{{ project.git.branch | default('main') }}"
     force: yes
+  ignore_errors: false
+  no_log: false
+  register: git_clone
   tags: app-code
 
 - name: Установка python3-full
@@ -84,6 +87,12 @@
     state: started
     enabled: yes
     daemon_reload: yes
+
+- name: Перезагрузка systemd для применения изменений
+  ansible.builtin.systemd:
+    name: flask_app
+    state: reloaded
+
 
 - name: Развертывание кода
   ansible.builtin.copy:
