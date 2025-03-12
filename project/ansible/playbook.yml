@@ -1,0 +1,10 @@
+- name: Configure CI/CD Host
+  hosts: all
+  become: yes
+  roles:
+    - common
+    - docker
+    - jenkins
+    - monitoring
+    - logging
+    - flask_app

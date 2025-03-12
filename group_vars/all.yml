@@ -1,5 +1,0 @@
----
-service_user: appuser
-app_port: 5000
-app_path: "/opt/app/app/src"
-venv_path: "{{ app_path }}/venv"

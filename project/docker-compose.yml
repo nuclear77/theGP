@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  flask-app:
+    build: ./app          # Ваш Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - ci-cd-net
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ci-cd-net
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - ci-cd-net
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - ci-cd-net
+
+  loki:
+    image: grafana/loki
+    networks:
+      - ci-cd-net
+
+  promtail:
+    image: grafana/promtail
+    volumes:
+      - /var/log:/var/log
+    networks:
+      - ci-cd-net
+
+volumes:
+  jenkins_data:
+
+networks:
+  ci-cd-net:

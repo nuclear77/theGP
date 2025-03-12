@@ -1,0 +1,9 @@
+- name: Run Prometheus and Grafana
+  docker_container:
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    ports: "{{ item.ports }}"
+    restart_policy: unless-stopped
+  loop:
+    - { name: "prometheus", image: "prom/prometheus", ports: "9090:9090" }
+    - { name: "grafana", image: "grafana/grafana", ports: "3000:3000"

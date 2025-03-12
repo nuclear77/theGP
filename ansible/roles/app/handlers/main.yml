@@ -1,5 +1,0 @@
----
-- name: restart flask-app
-  ansible.builtin.systemd:
-    name: flask-app
-    state: restarted
