@@ -1,9 +1,28 @@
-- name: Run Prometheus and Grafana
+---
+- name: Create monitoring directories
+  file:
+    path: "/etc/monitoring/grafana/provisioning/dashboards"
+    state: directory
+    mode: '0755'
+
+- name: Start Prometheus
   docker_container:
-    name: "{{ item.name }}"
-    image: "{{ item.image }}"
-    ports: "{{ item.ports }}"
+    name: prometheus
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "{{ playbook_dir }}/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml"
     restart_policy: unless-stopped
-  loop:
-    - { name: "prometheus", image: "prom/prometheus", ports: "9090:9090" }
-    - { name: "grafana", image: "grafana/grafana", ports: "3000:3000"
+
+- name: Start Grafana
+  docker_container:
+    name: grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards"
+    restart_policy: unless-stopped
+    env:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
