@@ -19,7 +19,7 @@
 - name: Run Jenkins container
   docker_container:
     name: jenkins
-    image: jenkins/jenkins:2.492.1-lts-jdk17
+    image: jenkins/jenkins:lts-jdk17
     ports:
       - "18080:8080"
       - "50000:50000"

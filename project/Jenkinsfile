@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/nuclear77/theGP.git'
+            }
+        }
+
+        stage('Build & Deploy Flask') {
+            steps {
+                script {
+                    sh 'docker-compose -f theGP/project/docker-compose.yml down'
+                    sh 'docker-compose -f theGP/project/docker-compose.yml up -d --build flask-app'
+                }
+            }
+        }
+    }
+}

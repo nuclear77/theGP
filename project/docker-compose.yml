@@ -3,13 +3,15 @@ version: '3.8'
 services:
   flask-app:
     build: ./app
+    image: my-flask-app
     ports:
       - "5000:5000"
     networks:
       - ci-cd-net
 
   jenkins:
-    image: jenkins/jenkins:2.492.1-lts-jdk17
+    image: jenkins/jenkins:lts-jdk17
+    user: root
     ports:
       - "18080:8080"
     volumes:
