@@ -9,14 +9,19 @@ services:
       - ci-cd-net
 
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:2.492.1-lts-jdk17
     ports:
-      - "8080:8080"
+      - "18080:8080"
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins.yml:/var/jenkins_home/jenkins.yml
     networks:
       - ci-cd-net
+    environment:
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yml
+      - JENKINS_UC_TIMEOUT=600
+      - CASC_RELOAD_TOKEN=reload
 
   prometheus:
     image: prom/prometheus
@@ -25,7 +30,19 @@ services:
     networks:
       - ci-cd-net
 
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - ci-cd-net
+    depends_on:
+      - prometheus
+
 volumes:
+  grafana_data:
   jenkins_data:
 
 networks:
