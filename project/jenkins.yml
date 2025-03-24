@@ -14,29 +14,3 @@ unclassified:
       - id: default
         url: https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
 
-plugins:
-  required:
-    - name: configuration-as-code
-    - name: structs
-    - name: workflow-step-api
-    - name: workflow-api
-    - name: workflow-cps
-    - name: workflow-support
-    - name: plugin-util-api
-    - name: jakarta-mail-api
-    - name: javax-activation-api
-    - name: variant
-    - name: font-awesome-api
-    - name: pipeline-graph-analysis
-    - name: credentials
-    - name: pipeline-groovy-lib
-    - name: checks-api
-    - name: mailer
-    - name: pipeline-multibranch
-    - name: jaxb
-    - name: jackson2-api
-    - name: workflow-scm-step
-    - name: token-macro
-    - name: ssh-credentials
-    - name: pipeline-stage-step
-    - name: workflow-job
