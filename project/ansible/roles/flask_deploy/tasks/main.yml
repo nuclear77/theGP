@@ -1,0 +1,37 @@
+---
+- name: Install system dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-pip
+    - python3-venv
+
+- name: Create application directory
+  file:
+    path: /opt/flask-app
+    state: directory
+    owner: jenkins
+    group: jenkins
+
+- name: Copy application files
+  copy:
+    src: ../../../app/
+    dest: /opt/flask-app
+    owner: jenkins
+    group: jenkins
+
+- name: Create virtual environment
+  command: python3 -m venv /opt/flask-app/venv
+  args:
+    creates: /opt/flask-app/venv
+
+- name: Install Python requirements
+  pip:
+    requirements: /opt/flask-app/requirements.txt
+    virtualenv: /opt/flask-app/venv
+
+- name: Deploy systemd service
+  copy:
+    src: "{{ playbook_dir }}/../scripts/flask-app.service"
+    dest: /etc/systemd/system/flask-app.service

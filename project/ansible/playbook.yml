@@ -1,9 +1,5 @@
-- name: Configure CI/CD Host
-  hosts: ci_cd_host
-  connection: local
+---
+- hosts: localhost
   become: yes
   roles:
-    - docker
-    - jenkins
-    - monitoring
-    - logging
+    - flask_deploy

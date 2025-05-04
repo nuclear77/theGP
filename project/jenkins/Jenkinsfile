@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    triggers {
+        pollSCM('* * * * *') //
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git 'file:///home/your-user/flask-project'
+            }
+        }
+
+        stage('Run Ansible') {
+            steps {
+                ansiblePlaybook(
+                    playbook: 'ansible/playbook.yml',
+                    inventory: 'localhost,',
+                    extras: '--connection=local -v'
+                )
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

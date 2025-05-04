@@ -1,0 +1,15 @@
+[Unit]
+Description=Flask Application Service
+After=network.target
+
+[Service]
+User=jenkins
+Group=jenkins
+WorkingDirectory=/opt/flask-app
+Environment="PATH=/opt/flask-app/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/opt/flask-app/venv/bin/python /opt/flask-app/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
