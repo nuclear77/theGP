@@ -8,18 +8,26 @@ pipeline {
     environment {
         APP_DIR = '/opt/flask-app'
         SERVICE_NAME = 'flask-app'
+        APP_PORT = '6060'
     }
 
     stages {
+        stage('Prepare Workspace') {
+            steps {
+                dir('project/jenkins') {
+                    script {
+                        echo "Working in: ${pwd()}"
+                    }
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [[
-                        $class: 'CleanBeforeCheckout',
-                        deleteUntrackedNestedRepositories: true
-                    ]],
+                    extensions: [[$class: 'CleanBeforeCheckout']],
                     userRemoteConfigs: [[
                         url: 'https://github.com/nuclear77/theGP.git'
                     ]]
@@ -27,47 +35,28 @@ pipeline {
             }
         }
 
-        stage('Check for Changes') {
-            steps {
-                script {
-                    def changes = sh(
-                        script: "git diff --name-only HEAD HEAD~1 | grep '^app/'",
-                        returnStatus: true
-                    )
-
-                    if (changes == 0) {
-                        env.CODE_CHANGED = 'true'
-                        echo "Обнаружены изменения в коде приложения"
-                    } else {
-                        env.CODE_CHANGED = 'false'
-                        echo "Изменений в коде приложения нет"
-                    }
-                }
-            }
-        }
-
         stage('Deploy with Ansible') {
-            when {
-                expression { return env.CODE_CHANGED == 'true' }
-            }
             steps {
-                sh '''
-                    ansible-playbook ansible/playbook.yml \
+                sh """
+                ansible-playbook ansible/playbook.yml \
                     -i "localhost," \
                     --connection=local \
-                    --extra-vars "app_dir=${APP_DIR}"
-                '''.stripIndent()
+                    -e "app_port=${APP_PORT}"
+                """
             }
         }
 
         stage('Restart Service') {
-            when {
-                expression { return env.CODE_CHANGED == 'true' }
-            }
             steps {
                 sh "sudo systemctl daemon-reload"
                 sh "sudo systemctl restart ${SERVICE_NAME}"
                 sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh "curl --retry 3 --retry-delay 5 http://localhost:${APP_PORT}/health"
             }
         }
     }
@@ -75,13 +64,12 @@ pipeline {
     post {
         always {
             cleanWs()
-            script {
-                if (currentBuild.result == 'SUCCESS') {
-                    echo "✅ Сборка успешна!"
-                } else if (currentBuild.result == 'FAILURE') {
-                    echo "❌ Сборка завершилась с ошибкой!"
-                }
-            }
+        }
+        success {
+            echo "✅ Приложение успешно запущено на порту ${APP_PORT}"
+        }
+        failure {
+            echo "❌ Ошибка развертывания на порту ${APP_PORT}"
         }
     }
 }
