@@ -2,23 +2,72 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('* * * * *') //
+        pollSCM('* * * * *')
+    }
+
+    environment {
+        APP_DIR = '/opt/flask-app'
+        SERVICE_NAME = 'flask-app'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/nuclear77/theGP.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [[
+                        $class: 'CleanBeforeCheckout',
+                        deleteUntrackedNestedRepositories: true
+                    ]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/nuclear77/theGP.git'
+                    ]]
+                ])
             }
         }
 
-        stage('Run Ansible') {
+        stage('Check for Changes') {
             steps {
-                ansiblePlaybook(
-                    playbook: 'ansible/playbook.yml',
-                    inventory: 'localhost,',
-                    extras: '--connection=local -v'
-                )
+                script {
+                    def changes = sh(
+                        script: "git diff --name-only HEAD HEAD~1 | grep '^app/'",
+                        returnStatus: true
+                    )
+
+                    if (changes == 0) {
+                        env.CODE_CHANGED = 'true'
+                        echo "Обнаружены изменения в коде приложения"
+                    } else {
+                        env.CODE_CHANGED = 'false'
+                        echo "Изменений в коде приложения нет"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy with Ansible') {
+            when {
+                expression { return env.CODE_CHANGED == 'true' }
+            }
+            steps {
+                sh '''
+                    ansible-playbook ansible/playbook.yml \
+                    -i "localhost," \
+                    --connection=local \
+                    --extra-vars "app_dir=${APP_DIR}"
+                '''.stripIndent()
+            }
+        }
+
+        stage('Restart Service') {
+            when {
+                expression { return env.CODE_CHANGED == 'true' }
+            }
+            steps {
+                sh "sudo systemctl daemon-reload"
+                sh "sudo systemctl restart ${SERVICE_NAME}"
+                sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
             }
         }
     }
@@ -26,6 +75,13 @@ pipeline {
     post {
         always {
             cleanWs()
+            script {
+                if (currentBuild.result == 'SUCCESS') {
+                    echo "✅ Сборка успешна!"
+                } else if (currentBuild.result == 'FAILURE') {
+                    echo "❌ Сборка завершилась с ошибкой!"
+                }
+            }
         }
     }
 }
