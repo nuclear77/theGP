@@ -6,58 +6,59 @@ pipeline {
     }
 
     environment {
-        APP_DIR = '/opt/flask-app'
-        SERVICE_NAME = 'flask-app'
-        APP_PORT = '6060'
+        SERVICE_NAME = "flask-app"
+        APP_PORT = "6060"
+        WORKSPACE_PATH = "${WORKSPACE}"
     }
 
     stages {
-        stage('Prepare Workspace') {
-            steps {
-                dir('project/jenkins') {
-                    script {
-                        echo "Working in: ${pwd()}"
-                    }
-                }
-            }
-        }
-
         stage('Checkout Code') {
             steps {
-                checkout([
+                checkout scm: [
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     extensions: [[$class: 'CleanBeforeCheckout']],
                     userRemoteConfigs: [[
                         url: 'https://github.com/nuclear77/theGP.git'
                     ]]
-                ])
+                ]
             }
         }
 
+        stage('Verify Files') {
+            steps {
+                sh "ls -la ${WORKSPACE_PATH}/project/app/app.py"
+                sh "ls -la ${WORKSPACE_PATH}/project/ansible/playbook.yml"
+                sh "ls -la ${WORKSPACE_PATH}/project/ansible/templates/flask-app.service.j2"
+            }
+        }
 
         stage('Deploy with Ansible') {
             steps {
                 sh """
-                ansible-playbook ansible/playbook.yml \
+                ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
                     -i "localhost," \
                     --connection=local \
-                    -e "app_port=${APP_PORT}"
+                    -e "app_port=${APP_PORT}" \
+                    -e "app_source_dir=${WORKSPACE_PATH}/project/app" \
+                    -e "ansible_template_dir=${WORKSPACE_PATH}/project/ansible/templates"
                 """
             }
         }
 
         stage('Restart Service') {
             steps {
-                sh "sudo systemctl daemon-reload"
-                sh "sudo systemctl restart ${SERVICE_NAME}"
-                sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
+                sh """
+                sudo systemctl daemon-reload
+                sudo systemctl restart ${SERVICE_NAME}
+                sudo systemctl status ${SERVICE_NAME} --no-pager
+                """
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                sh "curl --retry 3 --retry-delay 5 http://localhost:${APP_PORT}/health"
+                sh "curl --retry 3 --retry-delay 5 --connect-timeout 10 http://localhost:${APP_PORT}/health"
             }
         }
     }
