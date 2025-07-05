@@ -9,6 +9,7 @@ pipeline {
         SERVICE_NAME = "flask-app"
         APP_PORT = "6060"
         WORKSPACE_PATH = "${WORKSPACE}"
+        PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
     }
 
     stages {

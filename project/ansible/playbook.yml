@@ -3,6 +3,7 @@
   hosts: localhost
   connection: local
   become: yes
+  become_user: root
   vars:
     app_port: "6060"
     app_source_dir: ""
