@@ -1,5 +1,50 @@
 ---
-- hosts: localhost
+- name: Deploy Flask application
+  hosts: localhost
+  connection: local
   become: yes
-  roles:
-    - flask_deploy
+  vars:
+    app_port: "6060"
+    app_source_dir: ""
+    ansible_template_dir: ""
+
+  tasks:
+    - name: Install system dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3-pip
+        - python3-venv
+        - git
+
+    - name: Ensure app directory exists
+      file:
+        path: "/opt/flask-app"
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: 0755
+
+    - name: Copy application files
+      copy:
+        src: "{{ app_source_dir }}/"
+        dest: "/opt/flask-app"
+        owner: jenkins
+        group: jenkins
+
+    - name: Create virtual environment
+      command: python3 -m venv "/opt/flask-app/venv"
+      args:
+        creates: "/opt/flask-app/venv"
+
+    - name: Install Python requirements
+      pip:
+        requirements: "/opt/flask-app/requirements.txt"
+        virtualenv: "/opt/flask-app/venv"
+
+    - name: Deploy systemd service
+      copy:
+        src: "{{ ansible_template_dir }}/flask-app.service.j2"
+        dest: "/etc/systemd/system/flask-app.service"
+        mode: 0644

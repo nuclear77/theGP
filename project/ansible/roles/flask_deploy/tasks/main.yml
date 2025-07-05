@@ -33,5 +33,5 @@
 
 - name: Deploy systemd service
   copy:
-    src: "{{ playbook_dir }}/../scripts/flask-app.service"
-    dest: /etc/systemd/system/flask-app.service
+    src: "{{ playbook_dir }}/../scripts/flask-app.service.j2"
+    dest: /etc/systemd/system/flask-app.service.j2
