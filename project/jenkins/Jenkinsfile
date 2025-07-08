@@ -85,7 +85,6 @@ pipeline {
                 mimeType: 'text/html'
             )
         }
-
         failure {
             echo "❌ Ошибка развертывания на порту ${APP_PORT}"
             emailext (
@@ -96,3 +95,4 @@ pipeline {
             )
         }
     }
+}
