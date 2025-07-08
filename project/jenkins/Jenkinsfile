@@ -93,6 +93,6 @@ pipeline {
                 body: "Сборка ${env.BUILD_NUMBER} завершилась с ошибкой. Срочно проверьте логи!",
                 to: 'spiritvoideu@gmail.com',
                 mimeType: 'text/html'
-            }
+            )
         }
     }
