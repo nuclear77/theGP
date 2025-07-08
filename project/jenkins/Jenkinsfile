@@ -10,6 +10,7 @@ pipeline {
         APP_PORT = "6060"
         WORKSPACE_PATH = "${WORKSPACE}"
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
+        PIP_CACHE_DIR = "${WORKSPACE}/.pip-cache"
     }
 
     stages {
@@ -26,11 +27,34 @@ pipeline {
             }
         }
 
+        stage('Setup Python Environment') {
+            steps {
+                sh """
+                python -m pip install --upgrade pip
+                pip install --cache-dir ${PIP_CACHE_DIR} flake8
+                """
+            }
+        }
+
         stage('Lint Python Code') {
             steps {
                 sh """
-                flake8 ${WORKSPACE_PATH}/project/app/ --config=${WORKSPACE_PATH}/.flake8
+                flake8 ${WORKSPACE_PATH}/project/app/ \
+                    --config=${WORKSPACE_PATH}/.flake8 \
+                    --format=html > ${WORKSPACE}/flake8_report.html || true
                 """
+            }
+            post {
+                always {
+                    publishHTML target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'flake8_report.html',
+                        reportName: 'Flake8 Report'
+                    ]
+                }
             }
         }
 
