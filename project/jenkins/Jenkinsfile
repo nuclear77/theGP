@@ -26,6 +26,14 @@ pipeline {
             }
         }
 
+        stage('Lint Python Code') {
+            steps {
+                sh """
+                flake8 ${WORKSPACE_PATH}/project/app/ --config=${WORKSPACE_PATH}/.flake8
+                """
+            }
+        }
+
         stage('Verify Files') {
             steps {
                 sh "ls -la ${WORKSPACE_PATH}/project/app/app.py"
@@ -70,9 +78,21 @@ pipeline {
         }
         success {
             echo "✅ Приложение успешно запущено на порту ${APP_PORT}"
+            emailext (
+                subject: "SUCCESS: ${env.JOB_NAME} build #${env.BUILD_NUMBER}",
+                body: "Приложение успешно развернуто на порту ${APP_PORT}",
+                to: 'spiritvoideu@gmail.com',
+                mimeType: 'text/html'
+            )
         }
+
         failure {
             echo "❌ Ошибка развертывания на порту ${APP_PORT}"
+            emailext (
+                subject: "FAILURE: ${env.JOB_NAME} build #${env.BUILD_NUMBER} - Требуется внимание!",
+                body: "Сборка ${env.BUILD_NUMBER} завершилась с ошибкой. Срочно проверьте логи!",
+                to: 'spiritvoideu@gmail.com',
+                mimeType: 'text/html'
+            }
         }
     }
-}
