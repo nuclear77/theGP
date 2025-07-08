@@ -26,7 +26,7 @@ pipeline {
             }
         }
 
-        stage('Setup Environment') {
+        stage('Setup Virtualenv') {
             steps {
                 sh """
                 python3 -m venv venv
@@ -40,7 +40,7 @@ pipeline {
             steps {
                 sh """
                 . venv/bin/activate
-                flake8 ${WORKSPACE_PATH}/project/app/ --config=${WORKSPACE_PATH}/.flake8 || echo "Lint issues found"
+                flake8 ${WORKSPACE_PATH}/project/app/ || echo "Lint issues found"
                 """
             }
         }
@@ -89,30 +89,19 @@ pipeline {
             script {
                 def status = currentBuild.result ?: 'SUCCESS'
                 def emoji = status == 'SUCCESS' ? '✅' : '❌'
-                def color = status == 'SUCCESS' ? '#008000' : '#FF0000'
-
-                def message = """
-                ${emoji} <b>${env.JOB_NAME}</b> #${env.BUILD_NUMBER}
-                Статус: <b>${status}</b>
-                Ветка: ${env.GIT_BRANCH ?: 'main'}
-                Порт: ${APP_PORT}
-                Длительность: ${currentBuild.durationString.replace(' and counting', '')}
-                Ссылка: <a href="${env.BUILD_URL}">Открыть сборку</a>
-                """
 
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
                     string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID')
                 ]) {
                     sh """
-                    curl -s -X POST \
-                        "https://api.telegram.org/bot\${BOT_TOKEN}/sendMessage" \
+                    curl -s -X POST "https://api.telegram.org/bot\${BOT_TOKEN}/sendMessage" \
                         -d chat_id="\${CHAT_ID}" \
-                        -d text="${message}" \
-                        -d parse_mode="HTML" \
-                        -d disable_web_page_preview="true"
+                        -d text="${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}" \
+                        -d parse_mode="Markdown"
                     """
                 }
             }
         }
     }
+}
