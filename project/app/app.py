@@ -20,7 +20,7 @@ REQUEST_LATENCY = Histogram(
 
 @app.route('/')
 def home():
-    return "testasdasd"
+    return "test 123"
 
 
 @app.route('/health')
