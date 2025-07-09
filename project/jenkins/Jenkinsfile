@@ -8,9 +8,11 @@ pipeline {
     environment {
         SERVICE_NAME = "flask-app"
         APP_PORT = "6060"
+        PROMETHEUS_PORT = "9090"
         WORKSPACE_PATH = "${WORKSPACE}"
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
         TEST_PATH = "${WORKSPACE_PATH}/project/tests"
+        MONITORING_PATH = "${WORKSPACE_PATH}/project/monitoring"
     }
 
     stages {
@@ -95,12 +97,36 @@ pipeline {
         }
     }
 
+        stage('Deploy Monitoring') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh """
+                ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook-monitoring.yml \
+                    -i "localhost," \
+                    --connection=local \
+                    -e "prometheus_config_dir=${MONITORING_PATH}" \
+                    -e "app_port=${APP_PORT}"
+                """
+
+                sh "sleep 10"
+                sh "curl --retry 3 --retry-delay 5 --connect-timeout 10 http://localhost:${PROMETHEUS_PORT}/-/healthy"
+            }
+        }
+    }
+
     post {
         always {
             cleanWs()
             script {
                 def status = currentBuild.result ?: 'SUCCESS'
                 def emoji = status == 'SUCCESS' ? '✅' : '❌'
+                def message = "${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+
+                if(status == 'SUCCESS' && env.BRANCH_NAME == 'main') {
+                    message += "\nPrometheus: http://${env.NODE_NAME}:${PROMETHEUS_PORT}"
+                }
 
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
@@ -109,7 +135,7 @@ pipeline {
                     sh """
                     curl -s -X POST "https://api.telegram.org/bot\${BOT_TOKEN}/sendMessage" \
                         -d chat_id="\${CHAT_ID}" \
-                        -d text="${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}" \
+                        -d text="${message}" \
                         -d parse_mode="Markdown"
                     """
                 }

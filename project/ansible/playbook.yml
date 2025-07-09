@@ -49,3 +49,20 @@
         src: "{{ ansible_template_dir }}/flask-app.service.j2"
         dest: "/etc/systemd/system/flask-app.service"
         mode: 0644
+
+    - name: Install Prometheus
+      apt:
+        name: prometheus
+        state: present
+
+    - name: Configure Prometheus
+      copy:
+        src: "{{ ansible_template_dir }}/prometheus.yml"
+        dest: /etc/prometheus/prometheus.yml
+      notify: Restart Prometheus
+
+    - name: Enable Prometheus service
+      systemd:
+        name: prometheus
+        enabled: yes
+        state: started
