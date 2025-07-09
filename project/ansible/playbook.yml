@@ -30,6 +30,8 @@
         dest: /opt/flask-app
         owner: "jenkins"
         group: "jenkins"
+        force: yes
+      notify: Restart Flask Service
 
     - name: Create virtual environment
       shell: |
