@@ -10,6 +10,7 @@ pipeline {
         APP_PORT = "6060"
         WORKSPACE_PATH = "${WORKSPACE}"
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
+        TEST_PATH = "${WORKSPACE_PATH}/project/tests"
     }
 
     stages {
@@ -31,7 +32,7 @@ pipeline {
                 sh """
                 python3 -m venv venv
                 . venv/bin/activate
-                pip install flake8
+                pip install flake8 requests  // Added requests for tests
                 """
             }
         }
@@ -50,6 +51,7 @@ pipeline {
                 sh "ls -la ${WORKSPACE_PATH}/project/app/app.py"
                 sh "ls -la ${WORKSPACE_PATH}/project/ansible/playbook.yml"
                 sh "ls -la ${WORKSPACE_PATH}/project/ansible/templates/flask-app.service.j2"
+                sh "ls -la ${TEST_PATH}/test_app.py"
             }
         }
 
@@ -79,6 +81,16 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh "curl --retry 3 --retry-delay 5 --connect-timeout 10 http://localhost:${APP_PORT}/health"
+            }
+        }
+
+        stage('Run Integration Tests') {
+            steps {
+                sh """
+                . venv/bin/activate
+                cd ${TEST_PATH}
+                python -m unittest test_app.py
+                """
             }
         }
     }
