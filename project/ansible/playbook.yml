@@ -21,15 +21,16 @@
       file:
         path: /opt/flask-app
         state: directory
-        owner: "jenkins"
-        group: "jenkins"
+        owner: jenkins
+        group: jenkins
+        mode: 0755
 
     - name: Copy application files
       copy:
-        src: "{{ app_source_dir }}"
+        src: "{{ app_source_dir }}/"
         dest: /opt/flask-app
-        owner: "jenkins"
-        group: "jenkins"
+        owner: jenkins
+        group: jenkins
         force: yes
       notify: Restart Flask Service
 
@@ -55,6 +56,6 @@
   handlers:
     - name: Restart Flask Service
       systemd:
-        name: flask-app
+        name: "{{ service_name }}"
         state: restarted
         daemon_reload: yes

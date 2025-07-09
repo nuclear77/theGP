@@ -1,6 +1,7 @@
 [Unit]
 Description=Flask Application on Port {{ app_port }}
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 User=jenkins
