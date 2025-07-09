@@ -95,7 +95,6 @@ pipeline {
                 """
             }
         }
-    }
 
         stage('Deploy Monitoring') {
             when {
