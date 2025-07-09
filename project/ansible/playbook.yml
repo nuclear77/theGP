@@ -2,6 +2,10 @@
 - name: Deploy Flask Application
   hosts: localhost
   become: yes
+  vars:
+    app_user: "jenkins"
+    app_group: "jenkins"
+
   tasks:
     - name: Install system dependencies
       apt:
@@ -16,25 +20,28 @@
       file:
         path: /opt/flask-app
         state: directory
-        owner: jenkins
-        group: jenkins
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
 
     - name: Copy application files
       copy:
         src: "{{ app_source_dir }}"
         dest: /opt/flask-app
-        owner: jenkins
-        group: jenkins
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
 
     - name: Create virtual environment
-      pip:
-        virtualenv: /opt/flask-app/venv
-        virtualenv_python: python3
+      shell: |
+        python3 -m venv /opt/flask-app/venv
+      args:
+        executable: /bin/bash
 
     - name: Install Python requirements
-      pip:
-        virtualenv: /opt/flask-app/venv
-        requirements: /opt/flask-app/requirements.txt
+      shell: |
+        source /opt/flask-app/venv/bin/activate
+        pip install -r /opt/flask-app/requirements.txt
+      args:
+        executable: /bin/bash
 
     - name: Deploy systemd service
       template:
@@ -42,6 +49,7 @@
         dest: /etc/systemd/system/{{ service_name }}.service
       vars:
         app_port: "{{ app_port }}"
+        app_user: "{{ app_user }}"
       notify: Restart Flask Service
 
   handlers:
