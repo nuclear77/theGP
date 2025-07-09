@@ -21,15 +21,15 @@
       file:
         path: /opt/flask-app
         state: directory
-        owner: "{{ app_user }}"
-        group: "{{ app_group }}"
+        owner: "jenkins"
+        group: "jenkins"
 
     - name: Copy application files
       copy:
         src: "{{ app_source_dir }}"
         dest: /opt/flask-app
-        owner: "{{ app_user }}"
-        group: "{{ app_group }}"
+        owner: "jenkins"
+        group: "jenkins"
 
     - name: Create virtual environment
       shell: |

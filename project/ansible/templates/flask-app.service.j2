@@ -3,7 +3,7 @@ Description=Flask Application on Port {{ app_port }}
 After=network.target
 
 [Service]
-User={{ app_user }}
+User=jenkins
 WorkingDirectory=/opt/flask-app
 Environment="PATH=/opt/flask-app/venv/bin"
 ExecStart=/opt/flask-app/venv/bin/python /opt/flask-app/app.py --port {{ app_port }}
