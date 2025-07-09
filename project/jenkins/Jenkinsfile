@@ -103,11 +103,11 @@ pipeline {
             }
             steps {
                 sh """
-                ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook-monitoring.yml \
-                    -i "localhost," \
-                    --connection=local \
-                    -e "prometheus_config_dir=${MONITORING_PATH}" \
-                    -e "app_port=${APP_PORT}"
+                    ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook-monitoring.yml \
+                        -i "localhost," \
+                        --connection=local \
+                        -e "prometheus_config_dir=${MONITORING_PATH}" \
+                        -e "app_port=${APP_PORT}"
                 """
 
                 sh "sleep 10"
