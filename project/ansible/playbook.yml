@@ -1,14 +1,7 @@
 ---
-- name: Deploy Flask application
+- name: Deploy Flask Application
   hosts: localhost
-  connection: local
   become: yes
-  become_user: root
-  vars:
-    app_port: "6060"
-    app_source_dir: ""
-    ansible_template_dir: ""
-
   tasks:
     - name: Install system dependencies
       apt:
@@ -21,48 +14,39 @@
 
     - name: Ensure app directory exists
       file:
-        path: "/opt/flask-app"
+        path: /opt/flask-app
         state: directory
-        owner: jenkins
-        group: jenkins
-        mode: 0755
+        owner: ubuntu
+        group: ubuntu
 
     - name: Copy application files
       copy:
-        src: "{{ app_source_dir }}/"
-        dest: "/opt/flask-app"
-        owner: jenkins
-        group: jenkins
+        src: "{{ app_source_dir }}"
+        dest: /opt/flask-app
+        owner: ubuntu
+        group: ubuntu
 
     - name: Create virtual environment
-      command: python3 -m venv "/opt/flask-app/venv"
-      args:
-        creates: "/opt/flask-app/venv"
+      pip:
+        virtualenv: /opt/flask-app/venv
+        virtualenv_python: python3
 
     - name: Install Python requirements
       pip:
-        requirements: "/opt/flask-app/requirements.txt"
-        virtualenv: "/opt/flask-app/venv"
+        virtualenv: /opt/flask-app/venv
+        requirements: /opt/flask-app/requirements.txt
 
     - name: Deploy systemd service
       template:
         src: "{{ ansible_template_dir }}/flask-app.service.j2"
-        dest: "/etc/systemd/system/flask-app.service"
-        mode: 0644
+        dest: /etc/systemd/system/{{ service_name }}.service
+      vars:
+        app_port: "{{ app_port }}"
+      notify: Restart Flask Service
 
-    - name: Install Prometheus
-      apt:
-        name: prometheus
-        state: present
-
-    - name: Configure Prometheus
-      copy:
-        src: "{{ ansible_template_dir }}/prometheus.yml"
-        dest: /etc/prometheus/prometheus.yml
-      notify: Restart Prometheus
-
-    - name: Enable Prometheus service
+  handlers:
+    - name: Restart Flask Service
       systemd:
-        name: prometheus
-        enabled: yes
-        state: started
+        name: "{{ service_name }}"
+        state: restarted
+        daemon_reload: yes

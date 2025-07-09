@@ -9,18 +9,19 @@
         state: present
 
     - name: Configure Prometheus
-      template:
-        src: "{{ ansible_template_dir }}/prometheus.yml"
+      copy:
+        src: "{{ monitoring_config_dir }}/prometheus.yml"
         dest: /etc/prometheus/prometheus.yml
+      notify: Restart Prometheus
 
-    - name: Deploy Prometheus systemd service
-      template:
-        src: "{{ ansible_template_dir }}/prometheus.service.j2"
-        dest: /etc/systemd/system/prometheus.service
+    - name: Ensure Prometheus service is enabled
+      systemd:
+        name: prometheus
+        enabled: yes
+        state: started
 
-    - name: Reload systemd and restart Prometheus
+  handlers:
+    - name: Restart Prometheus
       systemd:
         name: prometheus
         state: restarted
-        daemon_reload: yes
-        enabled: yes

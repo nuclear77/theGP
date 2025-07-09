@@ -66,6 +66,7 @@ pipeline {
                     -e "app_port=${APP_PORT}" \
                     -e "app_source_dir=${WORKSPACE_PATH}/project/app" \
                     -e "ansible_template_dir=${WORKSPACE_PATH}/project/ansible/templates"
+                    -e "monitoring_config_dir=${MONITORING_PATH}"
                 """
             }
         }
