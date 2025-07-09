@@ -32,7 +32,7 @@ pipeline {
                 sh """
                 python3 -m venv venv
                 . venv/bin/activate
-                pip install flake8 requests  // Added requests for tests
+                pip install flake8 requests
                 """
             }
         }
