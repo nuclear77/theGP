@@ -5,6 +5,7 @@
   vars:
     app_user: "jenkins"
     app_group: "jenkins"
+    service_name: "flask-app"
 
   tasks:
     - name: Install system dependencies
