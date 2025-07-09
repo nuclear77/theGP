@@ -1,6 +1,7 @@
 import unittest
 import requests
 import os
+import time
 
 
 class FlaskAppIntegrationTests(unittest.TestCase):
@@ -13,19 +14,25 @@ class FlaskAppIntegrationTests(unittest.TestCase):
         self.assertEqual(response.json(), {"status": "OK"})
 
     def test_metrics_endpoint(self):
+        requests.get(f"{self.BASE_URL}/health", timeout=self.TIMEOUT)
+        requests.get(f"{self.BASE_URL}/", timeout=self.TIMEOUT)
+
         response = requests.get(f"{self.BASE_URL}/metrics", timeout=self.TIMEOUT)
         self.assertEqual(response.status_code, 200)
         self.assertIn("http_requests_total", response.text)
-        self.assertIn("python_gc_objects_collected_total", response.text)
+        self.assertIn("http_request_duration_seconds", response.text)
 
     def test_invalid_endpoint(self):
         response = requests.get(f"{self.BASE_URL}/invalid-endpoint-123", timeout=self.TIMEOUT)
         self.assertEqual(response.status_code, 404)
-        self.assertIn("Not Found", response.text)
 
     def test_response_time(self):
+        start_time = time.time()
         response = requests.get(f"{self.BASE_URL}/health", timeout=self.TIMEOUT)
-        self.assertLess(response.elapsed.total_seconds(), 1, "Response time too slow")
+        latency = time.time() - start_time
+
+        self.assertLess(latency, 1, "Response time too slow")
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == "__main__":

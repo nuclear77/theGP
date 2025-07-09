@@ -32,7 +32,7 @@ pipeline {
                 sh """
                 python3 -m venv venv
                 . venv/bin/activate
-                pip install flake8 requests
+                pip install flake8 requests prometheus_client
                 """
             }
         }
