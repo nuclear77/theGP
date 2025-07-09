@@ -10,7 +10,7 @@
 
     - name: Configure Prometheus
       copy:
-        src: "{{ monitoring_config_dir }}/prometheus.yml"
+        src: "{{ prometheus_config_dir }}/prometheus.yml"
         dest: /etc/prometheus/prometheus.yml
       notify: Restart Prometheus
 
