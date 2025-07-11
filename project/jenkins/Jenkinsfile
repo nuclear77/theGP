@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('* * * * *')
+    }
+
     environment {
         SERVICE_NAME = "flask-app"
         APP_PORT = "6060"
