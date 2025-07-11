@@ -4,7 +4,8 @@ After=network.target
 StartLimitIntervalSec=0
 
 [Service]
-User=jenkins
+User=root
+Group=root
 WorkingDirectory=/opt/flask-app
 Environment="PATH=/opt/flask-app/venv/bin"
 ExecStart=/opt/flask-app/venv/bin/python /opt/flask-app/app.py --port {{ app_port }}

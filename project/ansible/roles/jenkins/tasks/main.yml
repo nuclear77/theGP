@@ -27,11 +27,3 @@
     port: 8080
     delay: 10
     timeout: 120
-
-- name: Get initial admin password
-  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
-  register: jenkins_pwd
-  changed_when: false
-
-- debug:
-    msg: "Jenkins initial admin password: {{ jenkins_pwd.stdout }}"

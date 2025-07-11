@@ -1,7 +1,8 @@
 ---
 - name: Deploy full infrastructure
-  hosts: all
+  hosts: localhost
   become: yes
+  gather_facts: yes
   roles:
     - jenkins
     - flask-app

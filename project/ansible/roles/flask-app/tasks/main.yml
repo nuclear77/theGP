@@ -11,24 +11,30 @@
   file:
     path: /opt/flask-app
     state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: root
+    group: root
+    mode: '0755'
 
 - name: Copy application files
   copy:
-    src: "{{ playbook_dir }}/../../app/"
+    src: "{{ playbook_dir }}/../app/"
     dest: /opt/flask-app
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: root
+    group: root
     force: yes
 
 - name: Create virtual environment
-  shell: python3 -m venv /opt/flask-app/venv
+  shell: |
+    python3 -m venv /opt/flask-app/venv
+  args:
+    executable: /bin/bash
 
 - name: Install Python requirements
   shell: |
-    . /opt/flask-app/venv/bin/activate
+    source /opt/flask-app/venv/bin/activate
     pip install -r /opt/flask-app/requirements.txt
+  args:
+    executable: /bin/bash
 
 - name: Deploy systemd service
   template:
