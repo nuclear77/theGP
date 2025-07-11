@@ -1,61 +1,11 @@
 ---
-- name: Deploy Flask Application
-  hosts: localhost
+- name: Deploy full infrastructure
+  hosts: all
   become: yes
+  roles:
+    - jenkins
+    - flask-app
+    - prometheus
   vars:
-    app_user: "jenkins"
-    app_group: "jenkins"
+    app_port: 6060
     service_name: "flask-app"
-
-  tasks:
-    - name: Install system dependencies
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - python3-pip
-        - python3-venv
-        - git
-
-    - name: Ensure app directory exists
-      file:
-        path: /opt/flask-app
-        state: directory
-        owner: jenkins
-        group: jenkins
-        mode: 0755
-
-    - name: Copy application files
-      copy:
-        src: "{{ app_source_dir }}/"
-        dest: /opt/flask-app
-        owner: jenkins
-        group: jenkins
-        force: yes
-      notify: Restart Flask Service
-
-    - name: Create virtual environment
-      shell: |
-        python3 -m venv /opt/flask-app/venv
-      args:
-        executable: /bin/bash
-
-    - name: Install Python requirements
-      shell: |
-        source /opt/flask-app/venv/bin/activate
-        pip install -r /opt/flask-app/requirements.txt
-      args:
-        executable: /bin/bash
-
-    - name: Deploy systemd service
-      template:
-        src: "{{ ansible_template_dir }}/flask-app.service.j2"
-        dest: /etc/systemd/system/{{ service_name }}.service
-      notify: Restart Flask Service
-
-  handlers:
-    - name: Restart Flask Service
-      systemd:
-        name: "{{ service_name }}"
-        state: restarted
-        daemon_reload: yes

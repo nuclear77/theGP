@@ -1,18 +1,12 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('* * * * *')
-    }
-
     environment {
         SERVICE_NAME = "flask-app"
         APP_PORT = "6060"
-        PROMETHEUS_PORT = "9090"
         WORKSPACE_PATH = "${WORKSPACE}"
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
         TEST_PATH = "${WORKSPACE_PATH}/project/tests"
-        MONITORING_PATH = "${WORKSPACE_PATH}/project/monitoring"
     }
 
     stages {
@@ -26,6 +20,13 @@ pipeline {
                         url: 'https://github.com/nuclear77/theGP.git'
                     ]]
                 ]
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                sh "sudo apt-get update"
+                sh "sudo apt-get install -y python3-venv"
             }
         }
 
@@ -48,41 +49,22 @@ pipeline {
             }
         }
 
-        stage('Verify Files') {
-            steps {
-                sh "ls -la ${WORKSPACE_PATH}/project/app/app.py"
-                sh "ls -la ${WORKSPACE_PATH}/project/ansible/playbook.yml"
-                sh "ls -la ${WORKSPACE_PATH}/project/ansible/templates/flask-app.service.j2"
-                sh "ls -la ${TEST_PATH}/test_app.py"
-            }
-        }
-
-        stage('Deploy with Ansible') {
+        stage('Deploy Infrastructure') {
             steps {
                 sh """
                 ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
                     -i "localhost," \
-                    --connection=local \
-                    -e "app_port=${APP_PORT}" \
-                    -e "app_source_dir=${WORKSPACE_PATH}/project/app" \
-                    -e "ansible_template_dir=${WORKSPACE_PATH}/project/ansible/templates"
-                """
-            }
-        }
-
-        stage('Restart Service') {
-            steps {
-                sh """
-                sudo systemctl daemon-reload
-                sudo systemctl restart ${SERVICE_NAME}
-                sudo systemctl status ${SERVICE_NAME} --no-pager
+                    --connection=local
                 """
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                sh "curl --retry 3 --retry-delay 5 --connect-timeout 10 http://localhost:${APP_PORT}/health"
+                retry(3) {
+                    sleep 5
+                    sh "curl --connect-timeout 10 http://localhost:${APP_PORT}/health"
+                }
             }
         }
 
@@ -95,24 +77,6 @@ pipeline {
                 """
             }
         }
-
-        stage('Deploy Monitoring') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh """
-                    ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook-monitoring.yml \
-                        -i "localhost," \
-                        --connection=local \
-                        -e "prometheus_config_dir=${MONITORING_PATH}" \
-                        -e "app_port=${APP_PORT}"
-                """
-
-                sh "sleep 10"
-                sh "curl --retry 3 --retry-delay 5 --connect-timeout 10 http://localhost:${PROMETHEUS_PORT}/-/healthy"
-            }
-        }
     }
 
     post {
@@ -122,10 +86,6 @@ pipeline {
                 def status = currentBuild.result ?: 'SUCCESS'
                 def emoji = status == 'SUCCESS' ? '✅' : '❌'
                 def message = "${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-
-                if(status == 'SUCCESS' && env.BRANCH_NAME == 'main') {
-                    message += "\nPrometheus: http://${env.NODE_NAME}:${PROMETHEUS_PORT}"
-                }
 
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
