@@ -8,10 +8,10 @@ receivers:
 - name: 'telegram'
   telegram_configs:
   - bot_token: '{{ telegram_bot_token }}'
-    chat_id: {{ telegram_chat_id }}
+    chat_id: '{{ telegram_chat_id }}'
     api_url: https://api.telegram.org
     send_resolved: true
-    message: '{{ template "telegram.message" . }}'
+    message: '{% raw %}{{ template "telegram.message" . }}{% endraw %}'
 
 templates:
 - '/etc/alertmanager/telegram.tmpl'
