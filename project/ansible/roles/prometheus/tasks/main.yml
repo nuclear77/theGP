@@ -28,9 +28,9 @@
     mode: '0644'
   notify: Restart Prometheus
 
-- name: Configure alert rules
-  template:
-    src: alerts.yml.j2
+- name: Deploy alert rules
+  copy:
+    src: alerts.yml
     dest: /etc/prometheus/alerts.yml
     owner: prometheus
     group: prometheus
@@ -46,19 +46,20 @@
     mode: '0644'
   notify: Restart Alertmanager
 
-- name: Copy Telegram template
+- name: Deploy Telegram template
   copy:
     content: |
       {{ define "telegram.message" }}
       {{ if eq .Status "firing" }}🔥 *[FIRING]* {{ .CommonLabels.alertname }}
       {{ else }}✅ *[RESOLVED]* {{ .CommonLabels.alertname }}
       {{ end }}
-
+      
       *Description:* {{ .CommonAnnotations.description }}
       *Severity:* {{ .CommonLabels.severity }}
-
+      
       {{ range .Alerts }}
       *Instance:* {{ .Labels.instance }}
+      *Service:* {{ .Labels.job }}
       *Start:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
       {{ if .GeneratorURL }}*Link:* [Alert]({{ .GeneratorURL }}){{ end }}
       {{ end }}
