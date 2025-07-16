@@ -11,6 +11,10 @@ pipeline {
         WORKSPACE_PATH = "${WORKSPACE}"
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
         TEST_PATH = "${WORKSPACE_PATH}/project/tests"
+        PROMETHEUS_PORT = "9090"
+        ALERTMANAGER_PORT = "9093"
+        NODE_EXPORTER_PORT = "9100"
+
     }
 
     stages {
@@ -55,11 +59,18 @@ pipeline {
 
         stage('Deploy Infrastructure') {
             steps {
+                withCredentials([
+                    string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
+                    string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID')
+                ]) {
                 sh """
                 ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
                     -i "localhost," \
-                    --connection=local
+                    --connection=local\
+                    -e "telegram_bot_token=${BOT_TOKEN}" \
+                    -e "telegram_chat_id=${CHAT_ID}"
                 """
+                }
             }
         }
 
@@ -81,15 +92,41 @@ pipeline {
                 """
             }
         }
+
+        stage('Test Alerting') {
+            steps {
+                script {
+                    sh """
+                    sudo tee -a /etc/prometheus/alerts.yml <<EOF
+
+                  - alert: JenkinsTestAlert
+                    expr: vector(1)
+                    for: 1m
+                    labels:
+                      severity: warning
+                    annotations:
+                      description: "Test alert from Jenkins build ${BUILD_NUMBER}"
+                    EOF
+
+                    # Перезагружаем Prometheus
+                    sudo systemctl reload prometheus
+
+                    # Ждем срабатывания алерта
+                    sleep 70
+                    """
+                }
+            }
+        }
     }
 
     post {
         always {
-            cleanWs()
             script {
                 def status = currentBuild.result ?: 'SUCCESS'
                 def emoji = status == 'SUCCESS' ? '✅' : '❌'
                 def message = "${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                message += "\n• Prometheus: http://${NODE_NAME}:${PROMETHEUS_PORT}"
+                message += "\n• Alertmanager: http://${NODE_NAME}:${ALERTMANAGER_PORT}"
 
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
@@ -102,7 +139,11 @@ pipeline {
                         -d parse_mode="Markdown"
                     """
                 }
+
+                sh "sudo sed -i '/JenkinsTestAlert/,/EOF/d' /etc/prometheus/alerts.yml"
+                sh "sudo systemctl reload prometheus"
             }
+            cleanWs()
         }
     }
 }

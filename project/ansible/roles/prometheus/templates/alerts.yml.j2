@@ -1,0 +1,38 @@
+groups:
+- name: system-alerts
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      description: '{{ $labels.instance }} is down'
+      summary: 'Instance {{ $labels.instance }} down'
+
+  - alert: HighCpuUsage
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      description: 'High CPU usage on {{ $labels.instance }} ({{ $value }}%)'
+      summary: 'High CPU usage'
+
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      description: 'High memory usage on {{ $labels.instance }} ({{ $value }}%)'
+      summary: 'High memory usage'
+
+  - alert: LowDiskSpace
+    expr: (node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"} < 20
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: 'Low disk space on {{ $labels.instance }} ({{ $value }}% available)'
+      summary: 'Low disk space'

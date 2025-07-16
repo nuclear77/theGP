@@ -5,8 +5,9 @@
   gather_facts: yes
   roles:
     - jenkins
-    - flask-app
     - prometheus
   vars:
     app_port: 6060
     service_name: "flask-app"
+    telegram_bot_token: "dummy"
+    telegram_chat_id: "dummy"

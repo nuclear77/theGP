@@ -1,0 +1,4 @@
+existing_scrape_configs: |
+  - job_name: 'flask-app'
+    static_configs:
+      - targets: ['localhost:{{ app_port | default(6060) }}']

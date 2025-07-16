@@ -1,20 +1,81 @@
 ---
-- name: Install Prometheus
+- name: Install monitoring components
   apt:
-    name: prometheus
+    name:
+      - prometheus
+      - prometheus-alertmanager
+      - prometheus-node-exporter
     state: present
+    update_cache: yes
 
-- name: Deploy Prometheus config
-  copy:
-    src: prometheus.yml
+- name: Create config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - /etc/prometheus
+    - /etc/alertmanager
+
+- name: Configure Prometheus
+  template:
+    src: prometheus.yml.j2
     dest: /etc/prometheus/prometheus.yml
     owner: prometheus
     group: prometheus
     mode: '0644'
+  notify: Restart Prometheus
 
-- name: Start Prometheus service
+- name: Configure alert rules
+  template:
+    src: alerts.yml.j2
+    dest: /etc/prometheus/alerts.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  notify: Restart Prometheus
+
+- name: Configure Alertmanager
+  template:
+    src: alertmanager.yml.j2
+    dest: /etc/alertmanager/alertmanager.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Alertmanager
+
+- name: Copy Telegram template
+  copy:
+    content: |
+      {{ define "telegram.message" }}
+      {{ if eq .Status "firing" }}🔥 *[FIRING]* {{ .CommonLabels.alertname }}
+      {{ else }}✅ *[RESOLVED]* {{ .CommonLabels.alertname }}
+      {{ end }}
+
+      *Description:* {{ .CommonAnnotations.description }}
+      *Severity:* {{ .CommonLabels.severity }}
+
+      {{ range .Alerts }}
+      *Instance:* {{ .Labels.instance }}
+      *Start:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+      {{ if .GeneratorURL }}*Link:* [Alert]({{ .GeneratorURL }}){{ end }}
+      {{ end }}
+      {{ end }}
+    dest: /etc/alertmanager/telegram.tmpl
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Alertmanager
+
+- name: Start and enable services
   systemd:
-    name: prometheus
+    name: "{{ item }}"
     state: started
     enabled: yes
     daemon_reload: yes
+  loop:
+    - prometheus
+    - alertmanager
+    - prometheus-node-exporter
