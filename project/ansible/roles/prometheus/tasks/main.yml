@@ -78,5 +78,5 @@
     daemon_reload: yes
   loop:
     - prometheus
-    - alertmanager
+    - prometheus-alertmanager
     - prometheus-node-exporter
