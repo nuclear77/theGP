@@ -141,7 +141,11 @@ pipeline {
                 }
 
                 sh "sudo sed -i '/JenkinsTestAlert/,/EOF/d' /etc/prometheus/alerts.yml"
-                sh "sudo systemctl reload prometheus"
+                if (sh(script: 'systemctl is-active prometheus', returnStatus: true) == 0) {
+                    sh 'sudo systemctl reload prometheus'
+                } else {
+                    sh 'sudo systemctl start prometheus'
+                }
             }
             cleanWs()
         }
