@@ -108,10 +108,8 @@ pipeline {
                       description: "Test alert from Jenkins build ${BUILD_NUMBER}"
                     EOF
 
-                    # Перезагружаем Prometheus
                     sudo systemctl reload prometheus
 
-                    # Ждем срабатывания алерта
                     sleep 70
                     """
                 }
@@ -125,8 +123,8 @@ pipeline {
                 def status = currentBuild.result ?: 'SUCCESS'
                 def emoji = status == 'SUCCESS' ? '✅' : '❌'
                 def message = "${emoji} Build ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                message += "\n• Prometheus: http://${NODE_NAME}:${PROMETHEUS_PORT}"
-                message += "\n• Alertmanager: http://${NODE_NAME}:${ALERTMANAGER_PORT}"
+                message += "\n• Prometheus: http://localhost:${PROMETHEUS_PORT}"
+                message += "\n• Alertmanager: http://localhost:${ALERTMANAGER_PORT}"
 
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),

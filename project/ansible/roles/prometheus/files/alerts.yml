@@ -1,65 +1,26 @@
 groups:
-- name: system-alerts
+- name: basic-alerts
   rules:
   - alert: InstanceDown
     expr: up == 0
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      description: '{{ $labels.instance }} is down'
-      summary: 'Instance {{ $labels.instance }} down'
-
-  - alert: HighCpuUsage
-    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      description: 'High CPU usage on {{ $labels.instance }} ({{ $value }}%)'
-      summary: 'High CPU usage'
-
-  - alert: HighMemoryUsage
-    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      description: 'High memory usage on {{ $labels.instance }} ({{ $value }}%)'
-      summary: 'High memory usage'
-
-  - alert: LowDiskSpace
-    expr: (node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"} < 20
-    for: 10m
-    labels:
-      severity: critical
-    annotations:
-      description: 'Low disk space on {{ $labels.instance }} ({{ $value }}% available)'
-      summary: 'Low disk space'
-
-  - alert: ServiceDown
-    expr: up{job!~"prometheus|node-exporter"} == 0
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      description: 'Service {{ $labels.job }} on {{ $labels.instance }} is down'
-      summary: 'Service {{ $labels.job }} down'
-
-  - alert: FlaskAppDown
-    expr: up{job="flask-app"} == 0
     for: 1m
     labels:
       severity: critical
     annotations:
-      description: 'Flask application is down'
-      summary: 'Flask application down'
+      summary: "Instance {{ $labels.instance }} is down"
 
-  - alert: HighFlaskLatency
-    expr: flask_http_request_duration_seconds_count > 1
+  - alert: HighCpuLoad
+    expr: node_load1 > 4
     for: 5m
     labels:
       severity: warning
     annotations:
-      description: 'High request latency in Flask application'
-      summary: 'High Flask latency'
+      summary: "High CPU load ({{ $value }}) on {{ $labels.instance }}"
+
+  - alert: LowDiskSpace
+    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.2
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Low disk space ({{ $value | humanizePercentage }}) on {{ $labels.instance }}"
