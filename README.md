@@ -6,6 +6,7 @@
 > - Jenkins
 > - Prometheus
 > - Flake8
+> - Alertmanager
 
 ---
 
@@ -31,8 +32,9 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ## Main paths
 
-| Service    | URL                    |
-|------------|------------------------|
-| FLask app  | http://localhost:6060/ |
-| Jenkins    | http://localhost:8080/ |
-| Prometheus | http://localhost:9090  |
+| Service      | URL                    |
+|--------------|------------------------|
+| FLask app    | http://localhost:6060/ |
+| Jenkins      | http://localhost:8080/ |
+| Prometheus   | http://localhost:9090  |
+| Alertmanager | http://localhost:9093/ |
