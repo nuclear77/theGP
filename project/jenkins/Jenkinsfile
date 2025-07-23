@@ -30,7 +30,6 @@ pipeline {
                         url: 'https://github.com/nuclear77/theGP.git'
                     ]]
                 ]
-              }
             }
         }
 
