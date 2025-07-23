@@ -8,7 +8,7 @@
 
 - name: Restart Alertmanager
   systemd:
-    name: alertmanager
+    name: prometheus-alertmanager
     state: restarted
     enabled: yes
     daemon_reload: yes
