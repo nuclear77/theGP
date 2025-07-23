@@ -36,6 +36,7 @@
       - git
     state: present
 
+
 - name: Create app directory
   file:
     path: /opt/flask-app
@@ -44,12 +45,11 @@
     group: root
     mode: '0755'
 
-- name: Copy application files
-  copy:
-    src: "{{ playbook_dir }}/../app/"
+- name: Clone Flask app from repository
+  git:
+    repo: "https://github.com/nuclear77/PG.git"
     dest: /opt/flask-app
-    owner: root
-    group: root
+    version: master
     force: yes
 
 - name: Create virtual environment
@@ -59,11 +59,10 @@
     executable: /bin/bash
 
 - name: Install Python requirements
-  shell: |
-    source /opt/flask-app/venv/bin/activate
-    pip install -r /opt/flask-app/requirements.txt
-  args:
-    executable: /bin/bash
+  pip:
+    requirements: /opt/flask-app/app/requirements.txt
+    virtualenv: /opt/flask-app/venv
+    virtualenv_python: python3
 
 - name: Deploy systemd service
   template:
