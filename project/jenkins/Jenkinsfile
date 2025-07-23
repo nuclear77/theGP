@@ -3,19 +3,6 @@ pipeline {
 
     triggers {
         pollSCM('* * * * *')
-
-        pollSCM(scmpoll_spec: '* * * * *', ignorePostCommitHooks: true) {
-            scm([
-                $class: 'GitSCM',
-                branches: [[name: '*/master']]
-                extensions: [
-                    [$class: 'RelativeTargetDirectory', relativeTargetDir: 'app']
-                ],
-                userRemoteConfigs: [[
-                    url: 'https://github.com/nuclear77/PG.git'
-                ]]
-            ])
-        }
     }
 
     environment {
@@ -28,6 +15,7 @@ pipeline {
         ALERTMANAGER_PORT = "9093"
         NODE_EXPORTER_PORT = "9100"
         APP_PATH = "${WORKSPACE_PATH}/app"
+        APP_REPO_URL = "https://github.com/nuclear77/PG.git"
 
     }
 
@@ -36,21 +24,31 @@ pipeline {
             steps {
                 checkout scm: [
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']],
+                    branches: [[name: '*/master']],
                     extensions: [[$class: 'CleanBeforeCheckout']],
                     userRemoteConfigs: [[
                         url: 'https://github.com/nuclear77/theGP.git'
                     ]]
                 ]
-
-              dir('app'){
-              git url: 'https://github.com/nuclear77/PG.git',
-                    branch: 'master',
-                    changelog: true,
-                    poll: true
               }
             }
         }
+
+        stage('Checkout Application Code') {
+            steps {
+                dir('app') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/master']],
+                        extensions: [[$class: 'CleanBeforeCheckout']],
+                        userRemoteConfigs: [[
+                            url: "${APP_REPO_URL}"
+                        ]]
+                    ])
+                }
+            }
+        }
+
 
         stage('Setup Environment') {
             steps {
