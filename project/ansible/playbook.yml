@@ -11,3 +11,12 @@
     service_name: "flask-app"
     telegram_bot_token: "dummy"
     telegram_chat_id: "dummy"
+    #promethus vars:
+    alertmanager_host: "localhost"
+    alertmanager_port: 9093
+    node_exporter_host: "localhost"
+    node_exporter_port: 9100
+    prometheus_host: "localhost"
+    prometheus_port: 9090
+    flask_app_host: "localhost"
+    flask_app_port: 6060

@@ -27,6 +27,16 @@
     group: prometheus
     mode: '0644'
   notify: Restart Prometheus
+  vars:
+    am_host: "{{ alertmanager_host | default('localhost') }}"
+    am_port: "{{ alertmanager_port | default('9093') }}"
+    rules_path: "{{ prometheus_rules_path | default('/etc/prometheus/alerts.yml') }}"
+    ne_host: "{{ node_exporter_host | default('localhost') }}"
+    ne_port: "{{ node_exporter_port | default('9100') }}"
+    prom_host: "{{ prometheus_host | default('localhost') }}"
+    prom_port: "{{ prometheus_port | default('9090') }}"
+    flask_host: "{{ flask_app_host | default('localhost') }}"
+    flask_port: "{{ flask_app_port | default('6060') }}"
 
 - name: Deploy alert rules
   copy:
