@@ -96,20 +96,37 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 script {
-                    sh """
-                    sudo rm -rf /opt/flask-app
-                    sudo git clone ${APP_REPO_URL} /opt/flask-app -b master
-                    sudo chown -R jenkins:jenkins /opt/flask-app
-                    """
-                    sh """
-                    sudo cp ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 \
-                         /etc/systemd/system/${SERVICE_NAME}.service
-                    sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
-                    sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
-                    """
-                    sh """
-                    sudo systemctl restart ${SERVICE_NAME}
-                    """
+            sh """
+            sudo rm -rf /opt/flask-app
+            sudo git clone ${APP_REPO_URL} /opt/flask-app -b master
+            sudo chown -R jenkins:jenkins /opt/flask-app
+            """
+
+            sh """
+            cd /opt/flask-app/app
+            python3 -m venv ../venv
+            source ../venv/bin/activate
+            pip install -r requirements.txt
+            deactivate
+            """
+
+            sh """
+            # Заменяем переменные в шаблоне
+            sed "s|{{ app_port }}|${APP_PORT}|g" \
+                ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 | \
+            sed "s|{{ working_directory }}|/opt/flask-app/app|g" | \
+            sed "s|{{ exec_start }}|/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py|g" \
+                > /tmp/flask-app.service
+
+            sudo cp /tmp/flask-app.service /etc/systemd/system/${SERVICE_NAME}.service
+            sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
+            sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
+            """
+
+            sh """
+            sudo systemctl daemon-reload
+            sudo systemctl restart ${SERVICE_NAME}
+            """
                 }
             }
         }
