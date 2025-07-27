@@ -54,7 +54,6 @@
       - git
     state: present
 
-
 - name: Create app directory
   file:
     path: /opt/flask-app
@@ -74,5 +73,3 @@
     requirements: /opt/flask-app/app/requirements.txt
     virtualenv: /opt/flask-app/venv
     virtualenv_python: python3
-
-

@@ -108,7 +108,6 @@ pipeline {
                     sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
                     """
                     sh """
-                    sudo systemctl daemon-reload
                     sudo systemctl restart ${SERVICE_NAME}
                     """
                 }
