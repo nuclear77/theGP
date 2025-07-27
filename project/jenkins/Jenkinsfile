@@ -103,13 +103,13 @@ pipeline {
             """
 
             sh """
-            # Заменяем переменные в шаблоне
-            sed "s|{{ app_port }}|${APP_PORT}|g" \
-                ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 | \
-            sed "s|{{ working_directory }}|/opt/flask-app/app|g" | \
-            sed "s|{{ exec_start }}|/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py|g" \
-                > /tmp/flask-app.service
+            sed -e "s|{{ app_port }}|${APP_PORT}|g" \
+                -e "s|{{ working_directory }}|/opt/flask-app/app|g" \
+                -e "s|{{ exec_start }}|/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py|g" \
+                ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 > /tmp/flask-app.service
+            """
 
+            sh """
             sudo cp /tmp/flask-app.service /etc/systemd/system/${SERVICE_NAME}.service
             sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
             sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
@@ -119,6 +119,8 @@ pipeline {
             sudo systemctl daemon-reload
             sudo systemctl restart ${SERVICE_NAME}
             """
+
+            sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
                 }
             }
         }
