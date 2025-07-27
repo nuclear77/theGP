@@ -96,31 +96,32 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 script {
-            sh """
-            sudo rm -rf /opt/flask-app
-            sudo git clone ${APP_REPO_URL} /opt/flask-app -b master
-            sudo chown -R jenkins:jenkins /opt/flask-app
-            """
+                    sh """
+                        sudo rm -rf /opt/flask-app
+                        sudo git clone ${APP_REPO_URL} /opt/flask-app -b master
+                        sudo chown -R jenkins:jenkins /opt/flask-app
+                    """
 
-            sh """
-            sed -e "s|{{ app_port }}|${APP_PORT}|g" \
-                -e "s|{{ working_directory }}|/opt/flask-app/app|g" \
-                -e "s|{{ exec_start }}|/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py|g" \
-                ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 > /tmp/flask-app.service
-            """
+                    sh """
+                        cd /opt/flask-app/app
+                        python3 -m venv ../venv
+                        ../venv/bin/pip install -r requirements.txt
+                    """
 
-            sh """
-            sudo cp /tmp/flask-app.service /etc/systemd/system/${SERVICE_NAME}.service
-            sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
-            sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
-            """
+                    sh """
+                        sudo cp ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 \
+                            /etc/systemd/system/${SERVICE_NAME}.service
 
-            sh """
-            sudo systemctl daemon-reload
-            sudo systemctl restart ${SERVICE_NAME}
-            """
+                        sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
+                        sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
+                    """
 
-            sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
+                    sh """
+                        sudo systemctl daemon-reload
+                        sudo systemctl restart ${SERVICE_NAME}
+                    """
+
+                    sh "sudo systemctl status ${SERVICE_NAME} --no-pager"
                 }
             }
         }
