@@ -102,7 +102,7 @@ pipeline {
                     sudo chown -R jenkins:jenkins /opt/flask-app
                     """
                     sh """
-                    sudo cp ${WORKSPACE_PATH}/project/ansible/templates/flask-app.service.j2 \
+                    sudo cp ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 \
                          /etc/systemd/system/${SERVICE_NAME}.service
                     sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
                     sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
