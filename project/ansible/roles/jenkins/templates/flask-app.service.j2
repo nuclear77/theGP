@@ -7,8 +7,9 @@ StartLimitIntervalSec=0
 User=jenkins
 Group=jenkins
 WorkingDirectory=/opt/flask-app/app
-Environment="PATH=/opt/flask-app/venv/bin"
-ExecStart=/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py --port {{ app_port }}
+ExecStart=/opt/flask-app/venv/bin/python /opt/flask-app/app/app.py
+Environment="PORT=6060"
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
