@@ -93,6 +93,28 @@ pipeline {
             }
         }
 
+        stage('Deploy Application') {
+            steps {
+                script {
+                    sh """
+                    sudo rm -rf /opt/flask-app
+                    sudo git clone ${APP_REPO_URL} /opt/flask-app -b master
+                    sudo chown -R jenkins:jenkins /opt/flask-app
+                    """
+                    sh """
+                    sudo cp ${WORKSPACE_PATH}/project/ansible/templates/flask-app.service.j2 \
+                         /etc/systemd/system/${SERVICE_NAME}.service
+                    sudo chown root:root /etc/systemd/system/${SERVICE_NAME}.service
+                    sudo chmod 0644 /etc/systemd/system/${SERVICE_NAME}.service
+                    """
+                    sh """
+                    sudo systemctl daemon-reload
+                    sudo systemctl restart ${SERVICE_NAME}
+                    """
+                }
+            }
+        }
+
         stage('Verify Deployment') {
             steps {
                 retry(3) {

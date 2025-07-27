@@ -28,6 +28,24 @@
     delay: 10
     timeout: 120
 
+# при надобности раскомментить
+#- name: Install initial Jenkins plugins
+#  community.general.jenkins_plugin:
+#    name: "{{ item }}"
+#    state: present
+#  loop:
+#    - git
+#    - workflow-aggregator
+#    - job-dsl
+#    - pipeline-utility-steps
+#    - ansible
+#
+#- name: Create Jenkins job seed
+#  community.general.jenkins_job:
+#    name: "bootstrap-pipeline"
+#    config: "{{ lookup('file', 'templates/jenkins-job-seed.xml') }}"
+#    state: present
+
 - name: Install system dependencies
   apt:
     name:
@@ -45,13 +63,6 @@
     group: root
     mode: '0755'
 
-- name: Clone Flask app from repository
-  git:
-    repo: "https://github.com/nuclear77/PG.git"
-    dest: /opt/flask-app
-    version: master
-    force: yes
-
 - name: Create virtual environment
   shell: |
     python3 -m venv /opt/flask-app/venv
@@ -64,16 +75,4 @@
     virtualenv: /opt/flask-app/venv
     virtualenv_python: python3
 
-- name: Deploy systemd service
-  template:
-    src: flask-app.service.j2
-    dest: /etc/systemd/system/{{ service_name }}.service
-    owner: root
-    group: root
-    mode: '0644'
 
-- name: Restart Flask Service
-  systemd:
-    name: "{{ service_name }}"
-    state: restarted
-    daemon_reload: yes

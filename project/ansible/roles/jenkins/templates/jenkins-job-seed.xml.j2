@@ -1,0 +1,43 @@
+<flow-definition plugin="workflow-job">
+  <definition plugin="workflow-cps">
+    <script><![CDATA[
+pipeline {
+    agent any
+    triggers {
+        pollSCM('* * * * *')
+    }
+    stages {
+        stage('Bootstrap main pipeline') {
+            steps {
+                jobDsl(
+                    scriptText: '''
+pipelineJob("main-app-pipeline") {
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
+                        url 'https://github.com/nuclear77/theGP.git'
+                    }
+                    branch 'main'
+                    extensions {
+                        cleanBeforeCheckout()
+                    }
+                }
+            }
+            scriptPath("project/jenkins/Jenkinsfile")
+        }
+    }
+    triggers {
+        scm('* * * * *')
+    }
+}
+                    '''
+                )
+            }
+        }
+    }
+}
+    ]]></script>
+  </definition>
+</flow-definition>
