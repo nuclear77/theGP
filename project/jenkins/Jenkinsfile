@@ -83,6 +83,7 @@ pipeline {
                 ]) {
                 sh """
                 ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
+                    -i inventory.ini \
                     -i "localhost," \
                     --connection=local\
                     -e "telegram_bot_token=${BOT_TOKEN}" \
