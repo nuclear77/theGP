@@ -103,11 +103,6 @@ pipeline {
             """
 
             sh """
-            cd /opt/flask-app/app
-            pip install -r requirements.txt
-            """
-
-            sh """
             # Заменяем переменные в шаблоне
             sed "s|{{ app_port }}|${APP_PORT}|g" \
                 ${WORKSPACE_PATH}/project/ansible/roles/jenkins/templates/flask-app.service.j2 | \
