@@ -19,7 +19,7 @@ cd ~/PycharmProjects/theGP/project/ansible
 2. launch project:
 
 ```bash
-ansible-playbook playbook.yml
+ansible-playbook playbook.yml -i inventori.ini --ask-vault-pass
 ```
 
 3. Receiving Jenkins admin password:
