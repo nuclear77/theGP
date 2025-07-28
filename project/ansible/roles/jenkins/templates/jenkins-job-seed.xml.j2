@@ -19,7 +19,7 @@ pipelineJob("main-app-pipeline") {
                     remote {
                         url 'https://github.com/nuclear77/theGP.git'
                     }
-                    branch 'main'
+                    branch '*/main'
                     extensions {
                         cleanBeforeCheckout()
                     }
