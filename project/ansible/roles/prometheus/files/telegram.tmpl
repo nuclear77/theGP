@@ -1,0 +1,14 @@
+{{ define "telegram.message" }}
+{{ if eq .Status "firing" }}🔥 *[FIRING]* {{ .CommonLabels.alertname }}
+{{ else }}✅ *[RESOLVED]* {{ .CommonLabels.alertname }}
+{{ end }}
+
+*Description:* {{ .CommonAnnotations.description }}
+*Severity:* {{ .CommonLabels.severity }}
+
+{{ range .Alerts }}
+*Instance:* {{ .Labels.instance }}
+*Start:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ if .GeneratorURL }}*Link:* [Alert]({{ .GeneratorURL }}){{ end }}
+{{ end }}
+{{ end }}
