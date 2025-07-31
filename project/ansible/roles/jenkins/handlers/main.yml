@@ -4,9 +4,9 @@
     name: jenkins
     state: restarted
 
-- name: safe restart jenkins
+- name: safe reload jenkins
   community.general.jenkins_script:
-    script: "Jenkins.instance.restart()"
+    script: "Jenkins.instance.doReload()"
     url: http://localhost:8080
     wait: yes
     timeout: 60

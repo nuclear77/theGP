@@ -89,18 +89,17 @@
     - pipeline-utility-steps
     - ansible
 
-- name: Restart Jenkins to load plugins
-  systemd:
-    name: jenkins
-    state: restarted
-  register: service_restart
-
-- name: Wait for Jenkins after restart
+- name: Wait for plugins to load
   wait_for:
-    port: 8080
-    delay: 20
-    timeout: 300
-  when: service_restart.changed
+    path: /var/lib/jenkins/plugins/{{ item }}.jpi
+    timeout: 120
+  loop:
+    - configuration-as-code
+    - git
+    - workflow-aggregator
+    - job-dsl
+    - pipeline-utility-steps
+    - ansible
 
 - name: Create JCasC configuration directory
   file:
@@ -124,7 +123,7 @@
     regexp: "^CASC_JENKINS_CONFIG="
     line: 'CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs'
     state: present
-  notify: restart jenkins
+  notify: safe reload jenkins
 
 - name: Apply security configuration
   systemd:
