@@ -103,18 +103,31 @@
 
 - name: Trigger plugin installation
   shell: |
+    set -e
+    echo "Starting plugin installation check"
     for plugin in configuration-as-code git workflow-aggregator job-dsl pipeline-utility-steps ansible; do
+      counter=0
+      max_retries=10
       while [ ! -f "/var/lib/jenkins/plugins/${plugin}.jpi" ]; do
-        echo "Waiting for ${plugin} to be installed..."
-        sleep 10
+        if [ $counter -ge $max_retries ]; then
+          echo "Timeout waiting for ${plugin}.jpi"
+          exit 1
+        fi
+        
+        echo "Waiting for ${plugin} to be installed... (attempt $((counter+1))"
+        sleep 3
+        ((counter++))
       done
+      echo "${plugin} successfully installed"
     done
+    echo "All plugins installed successfully"
   args:
     executable: /bin/bash
   register: plugin_check
   until: plugin_check.rc == 0
-  retries: 5
+  retries: 1
   delay: 0
+  ignore_errors: true
 
 
 - name: Create JCasC configuration directory
