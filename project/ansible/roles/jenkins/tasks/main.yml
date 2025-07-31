@@ -27,20 +27,73 @@
     delay: 10
     timeout: 120
 
+- name: Install required plugins
+  community.general.jenkins_plugin:
+    name:
+      - configuration-as-code
+      - git
+      - workflow-aggregator
+      - ansible
+      - pipeline-utility-steps
+      - credentials-binding
+      - ws-cleanup
+    state: present
+  register: plugins_result
+  until: plugins_result is success
+  retries: 10
+  delay: 15
+
+- name: Create JCasC config directory
+  file:
+    path: /var/lib/jenkins/casc_configs
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+
+- name: Deploy JCasC main configuration
+  template:
+    src: jenkins.yaml.j2
+    dest: /var/lib/jenkins/casc_configs/jenkins.yaml
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+
+- name: Configure JCasC environment
+  lineinfile:
+    path: /etc/default/jenkins
+    regexp: '^CASC_JENKINS_CONFIG='
+    line: 'CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs/jenkins.yaml'
+    state: present
+    insertafter: EOF
+
+- name: Restart Jenkins service
+  systemd:
+    name: jenkins
+    state: restarted
+
+- name: Wait for Jenkins after restart
+  wait_for:
+    port: 8080
+    delay: 10
+    timeout: 50
+
 - name: Install system dependencies
   apt:
     name:
       - python3-pip
       - python3-venv
       - git
+      - ansible
+      - curl
     state: present
 
 - name: Create app directory
   file:
     path: /opt/flask-app
     state: directory
-    owner: root
-    group: root
+    owner: jenkins
+    group: jenkins
     mode: '0755'
 
 - name: Create virtual environment
@@ -48,9 +101,13 @@
     python3 -m venv /opt/flask-app/venv
   args:
     executable: /bin/bash
+  become: yes
+  become_user: jenkins
 
 - name: Install Python requirements
   pip:
     requirements: /opt/flask-app/app/requirements.txt
     virtualenv: /opt/flask-app/venv
     virtualenv_python: python3
+  become: yes
+  become_user: jenkins

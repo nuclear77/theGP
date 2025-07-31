@@ -1,0 +1,37 @@
+jenkins:
+  systemMessage: "Jenkins Configured as Code"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: "{{ jenkins_admin_password }}"
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+  tools:
+    git:
+      installations:
+        - name: git
+          home: /usr/bin/git
+  jobs:
+    - script: >
+        pipelineJob('Flask-App-Pipeline') {
+          definition {
+            cpsScm {
+              scm {
+                git {
+                  remote {
+                    url('https://github.com/your/repo.git')
+                  }
+                  branches('main')
+                }
+              }
+              scriptPath('Jenkinsfile')
+            }
+          }
+        }
+unclassified:
+  location:
+    url: http://{{ ansible_host }}:8080/

@@ -1,0 +1,84 @@
+jenkins:
+  systemMessage: "Jenkins Fully Configured as Code"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: "{{ jenkins_admin_password }}"
+
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Job/Build:admin"
+        - "Job/Cancel:admin"
+        - "Job/Configure:admin"
+        - "Job/Create:admin"
+        - "Job/Delete:admin"
+        - "Job/Discover:admin"
+        - "Job/Read:admin"
+        - "Job/Workspace:admin"
+        - "Run/Delete:admin"
+        - "Run/Replay:admin"
+        - "Run/Update:admin"
+        - "SCM/Tag:admin"
+        - "View/Configure:admin"
+        - "View/Create:admin"
+        - "View/Delete:admin"
+        - "View/Read:admin"
+
+  numExecutors: 2
+
+  tools:
+    git:
+      installations:
+        - name: system-git
+          home: /usr/bin/git
+
+  jobs:
+    - script: >
+        pipelineJob('Flask-App-Pipeline') {
+          definition {
+            cpsScm {
+              scm {
+                git {
+                  remote {
+                    url('https://github.com/nuclear77/theGP.git')
+                    credentials('')
+                  }
+                  branches('*/main')
+                }
+              }
+              scriptPath('project/jenkins/Jenkinsfile')
+            }
+          }
+          properties {
+            pipelineTriggers {
+              triggers {
+                pollSCM {
+                  spec('* * * * *')
+                }
+              }
+            }
+          }
+        }
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: telegram-bot-token
+              secret: "{{ telegram_bot_token }}"
+              description: "Telegram Bot Token"
+          - string:
+              scope: GLOBAL
+              id: telegram-chat-id
+              secret: "{{ telegram_chat_id }}"
+              description: "Telegram Chat ID"
+
+unclassified:
+  location:
+    url: http://{{ ansible_host }}:8080/
