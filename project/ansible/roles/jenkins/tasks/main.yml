@@ -71,10 +71,18 @@
     state: present
     insertafter: EOF
 
-- name: Restart Jenkins service
-  systemd:
-    name: jenkins
-    state: restarted
+- name: Reload JCasC configuration via API
+  uri:
+    url: "http://localhost:8080/configuration-as-code/reload"
+    method: POST
+    user: "admin"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    status_code: 200, 201
+  register: reload_result
+  until: reload_result.status in [200, 201]
+  retries: 5
+  delay: 10
 
 - name: Wait for Jenkins after restart
   wait_for:
