@@ -30,29 +30,43 @@
     state: started
     enabled: yes
 
-- name: Wait for Jenkins initialization
-  wait_for:
-    port: 8080
-    delay: 10
-    timeout: 120
+- name: Wait for Jenkins to be ready
+  uri:
+    url: http://localhost:8080/login
+    status_code: 200
+    timeout: 5
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 5
+
+- name: Get initial admin password
+  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: jenkins_initial_password
+  changed_when: false
+  no_log: true
 
 - name: Install Jenkins plugins
   community.general.jenkins_plugin:
     name: "{{ item }}"
     state: present
     url: http://localhost:8080
-    timeout: 120
+    timeout: 60
+    username: admin
+    password: "{{ jenkins_initial_password.stdout }}"
   loop:
     - git
     - workflow-aggregator
     - job-dsl
     - pipeline-utility-steps
     - ansible
-  register: plugins_result
-  until: plugins_result is succeeded
-  retries: 3
-  delay: 10
   notify: safe restart jenkins
+
+- name: Wait after plugins installation
+  wait_for:
+    port: 8080
+    delay: 10
+    timeout: 120
 
 - name: Check if flask job exists
   community.general.jenkins_job_info:
@@ -66,6 +80,8 @@
     name: "flask"
     config: "{{ lookup('template', 'jenkins-job-seed.xml.j2') }}"
     url: http://localhost:8080
+    username: admin
+    password: "{{ jenkins_initial_password.stdout }}"
     timeout: 60
   when: job_check is failed or job_check.jobs is not defined
 

@@ -8,5 +8,7 @@
   community.general.jenkins_script:
     script: "Jenkins.instance.restart()"
     url: http://localhost:8080
+    username: admin
+    password: "{{ jenkins_initial_password.stdout }}"
     wait: yes
-    timeout: 120
+    timeout: 60
