@@ -11,6 +11,9 @@ jenkins:
     globalMatrix:
       permissions:
         - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+        - "Overall/SystemRead:admin"
+        - "Overall/SystemAdminister:admin"
         - "Job/Build:admin"
         - "Job/Cancel:admin"
         - "Job/Configure:admin"
