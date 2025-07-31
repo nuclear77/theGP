@@ -1,15 +1,3 @@
----
-- name: Install required system packages
-  apt:
-    name:
-      - curl
-      - gnupg
-      - software-properties-common
-      - git
-      - python3-pip
-      - python3-venv
-    state: present
-
 - name: Add Jenkins repository key
   apt_key:
     url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
@@ -27,143 +15,25 @@
     state: present
     update_cache: yes
 
-- name: Disable setup wizard and security
-  block:
-    - name: Set Java arguments to disable setup
-      lineinfile:
-        path: /etc/default/jenkins
-        regexp: "^JAVA_ARGS="
-        line: 'JAVA_ARGS="-Djenkins.install.runSetupWizard=false -Djenkins.model.Jenkins.installState=INITIAL_SETUP_COMPLETED"'
-        state: present
-
-    - name: Create minimal config.xml
-      copy:
-        dest: /var/lib/jenkins/config.xml
-        content: |
-          <?xml version='1.1' encoding='UTF-8'?>
-          <hudson>
-            <disabledAdministrativeMonitors/>
-            <version>2.414.1</version>
-            <installStateName>RUNNING</installStateName>
-            <numExecutors>2</numExecutors>
-            <mode>NORMAL</mode>
-            <useSecurity>false</useSecurity>
-          </hudson>
-        owner: jenkins
-        group: jenkins
-        mode: '0644'
-  notify: restart jenkins
-
 - name: Start Jenkins service
   systemd:
     name: jenkins
     state: started
     enabled: yes
 
-- name: Wait for Jenkins to start
+- name: Wait for Jenkins initialization
   wait_for:
     port: 8080
     delay: 10
-    timeout: 300
+    timeout: 120
 
-- name: Create plugins directory
-  file:
-    path: /var/lib/jenkins/plugins
-    state: directory
-    owner: jenkins
-    group: jenkins
-    mode: '0755'
-
-- name: Pre-download required plugins
-  get_url:
-    url: "https://updates.jenkins.io/download/plugins/{{ item }}/latest/{{ item }}.hpi"
-    dest: "/var/lib/jenkins/plugins/{{ item }}.hpi"
-    owner: jenkins
-    group: jenkins
-    mode: '0644'
-  loop:
-    - configuration-as-code
-    - git
-    - workflow-aggregator
-    - job-dsl
-    - pipeline-utility-steps
-    - ansible
-  register: plugins_download
-  until: plugins_download is succeeded
-  retries: 3
-  delay: 5
-
-- name: Fix plugins ownership
-  file:
-    path: /var/lib/jenkins/plugins
-    owner: jenkins
-    group: jenkins
-    recurse: yes
-    state: directory
-
-- name: Trigger plugin installation
-  shell: |
-    set -e
-    echo "Starting plugin installation check"
-    for plugin in configuration-as-code git workflow-aggregator job-dsl pipeline-utility-steps ansible; do
-      counter=0
-      max_retries=10
-      while [ ! -f "/var/lib/jenkins/plugins/${plugin}.jpi" ]; do
-        if [ $counter -ge $max_retries ]; then
-          echo "Timeout waiting for ${plugin}.jpi"
-          exit 1
-        fi
-        
-        echo "Waiting for ${plugin} to be installed... (attempt $((counter+1))"
-        sleep 3
-        ((counter++))
-      done
-      echo "${plugin} successfully installed"
-    done
-    echo "All plugins installed successfully"
-  args:
-    executable: /bin/bash
-  register: plugin_check
-  until: plugin_check.rc == 0
-  retries: 1
-  delay: 0
-  ignore_errors: true
-
-
-- name: Create JCasC configuration directory
-  file:
-    path: /var/lib/jenkins/casc_configs
-    state: directory
-    owner: jenkins
-    group: jenkins
-    mode: '0755'
-
-- name: Generate JCasC configuration
-  template:
-    src: jenkins.yaml.j2
-    dest: /var/lib/jenkins/casc_configs/jenkins.yaml
-    owner: jenkins
-    group: jenkins
-    mode: '0644'
-
-- name: Set JCasC environment variable
-  lineinfile:
-    path: /etc/default/jenkins
-    regexp: "^CASC_JENKINS_CONFIG="
-    line: 'CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs'
+- name: Install system dependencies
+  apt:
+    name:
+      - python3-pip
+      - python3-venv
+      - git
     state: present
-  notify: safe reload jenkins
-
-- name: Apply security configuration
-  systemd:
-    name: jenkins
-    state: restarted
-
-- name: Final wait for Jenkins
-  wait_for:
-    port: 8080
-    delay: 20
-    timeout: 300
 
 - name: Create app directory
   file:
