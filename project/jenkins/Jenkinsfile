@@ -79,7 +79,7 @@ pipeline {
             steps {
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
-                    string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID')
+                    string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID'),
                     string(credentialsId: 'jenkins-admin-password', variable: 'JENKINS_ADMIN_PASSWORD')
                 ]) {
                 sh "echo 'localhost ansible_connection=local' > ${WORKSPACE_PATH}/inventory.ini"
