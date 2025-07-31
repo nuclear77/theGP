@@ -1,4 +1,15 @@
 ---
+- name: Install required system packages
+  apt:
+    name:
+      - curl
+      - gnupg
+      - software-properties-common
+      - git
+      - python3-pip
+      - python3-venv
+    state: present
+
 - name: Add Jenkins repository key
   apt_key:
     url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
@@ -16,12 +27,31 @@
     state: present
     update_cache: yes
 
-- name: Disable initial setup wizard
-  lineinfile:
-    path: /etc/default/jenkins
-    regexp: "^JAVA_ARGS="
-    line: 'JAVA_ARGS="-Djenkins.install.runSetupWizard=false"'
-    state: present
+- name: Disable setup wizard and security
+  block:
+    - name: Set Java arguments to disable setup
+      lineinfile:
+        path: /etc/default/jenkins
+        regexp: "^JAVA_ARGS="
+        line: 'JAVA_ARGS="-Djenkins.install.runSetupWizard=false -Djenkins.model.Jenkins.installState=INITIAL_SETUP_COMPLETED"'
+        state: present
+
+    - name: Create minimal config.xml
+      copy:
+        dest: /var/lib/jenkins/config.xml
+        content: |
+          <?xml version='1.1' encoding='UTF-8'?>
+          <hudson>
+            <disabledAdministrativeMonitors/>
+            <version>2.414.1</version>
+            <installStateName>RUNNING</installStateName>
+            <numExecutors>2</numExecutors>
+            <mode>NORMAL</mode>
+            <useSecurity>false</useSecurity>
+          </hudson>
+        owner: jenkins
+        group: jenkins
+        mode: '0644'
   notify: restart jenkins
 
 - name: Start Jenkins service
@@ -30,68 +60,82 @@
     state: started
     enabled: yes
 
-- name: Wait for Jenkins to be ready
-  uri:
-    url: http://localhost:8080/login
-    status_code: 200
-    timeout: 5
-  register: result
-  until: result.status == 200
-  retries: 30
-  delay: 5
+- name: Wait for Jenkins to start
+  wait_for:
+    port: 8080
+    delay: 10
+    timeout: 300
 
-- name: Get initial admin password
-  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
-  register: jenkins_initial_password
-  changed_when: false
-  no_log: true
+- name: Create plugins directory
+  file:
+    path: /var/lib/jenkins/plugins
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
 
-- name: Install Jenkins plugins
-  community.general.jenkins_plugin:
-    name: "{{ item }}"
-    state: present
-    url: http://localhost:8080
-    timeout: 60
-    username: admin
-    password: "{{ jenkins_initial_password.stdout }}"
+- name: Pre-download required plugins
+  get_url:
+    url: "https://updates.jenkins.io/download/plugins/{{ item }}/latest/{{ item }}.hpi"
+    dest: "/var/lib/jenkins/plugins/{{ item }}.hpi"
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
   loop:
+    - configuration-as-code
     - git
     - workflow-aggregator
     - job-dsl
     - pipeline-utility-steps
     - ansible
-  notify: safe restart jenkins
 
-- name: Wait after plugins installation
+- name: Restart Jenkins to load plugins
+  systemd:
+    name: jenkins
+    state: restarted
+  register: service_restart
+
+- name: Wait for Jenkins after restart
   wait_for:
     port: 8080
-    delay: 10
-    timeout: 120
+    delay: 20
+    timeout: 300
+  when: service_restart.changed
 
-- name: Check if flask job exists
-  community.general.jenkins_job_info:
-    name: "flask"
-    url: http://localhost:8080
-  register: job_check
-  ignore_errors: yes
+- name: Create JCasC configuration directory
+  file:
+    path: /var/lib/jenkins/casc_configs
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
 
-- name: Create flask job from template
-  community.general.jenkins_job:
-    name: "flask"
-    config: "{{ lookup('template', 'jenkins-job-seed.xml.j2') }}"
-    url: http://localhost:8080
-    username: admin
-    password: "{{ jenkins_initial_password.stdout }}"
-    timeout: 60
-  when: job_check is failed or job_check.jobs is not defined
+- name: Generate JCasC configuration
+  template:
+    src: jenkins.yaml.j2
+    dest: /var/lib/jenkins/casc_configs/jenkins.yaml
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
 
-- name: Install system dependencies
-  apt:
-    name:
-      - python3-pip
-      - python3-venv
-      - git
+- name: Set JCasC environment variable
+  lineinfile:
+    path: /etc/default/jenkins
+    regexp: "^CASC_JENKINS_CONFIG="
+    line: 'CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs'
     state: present
+  notify: restart jenkins
+
+- name: Apply security configuration
+  systemd:
+    name: jenkins
+    state: restarted
+
+- name: Final wait for Jenkins
+  wait_for:
+    port: 8080
+    delay: 20
+    timeout: 300
 
 - name: Create app directory
   file:
