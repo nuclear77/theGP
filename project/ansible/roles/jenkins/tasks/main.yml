@@ -88,18 +88,34 @@
     - job-dsl
     - pipeline-utility-steps
     - ansible
+  register: plugins_download
+  until: plugins_download is succeeded
+  retries: 3
+  delay: 5
 
-- name: Wait for plugins to load
-  wait_for:
-    path: /var/lib/jenkins/plugins/{{ item }}.jpi
-    timeout: 50
-  loop:
-    - configuration-as-code
-    - git
-    - workflow-aggregator
-    - job-dsl
-    - pipeline-utility-steps
-    - ansible
+- name: Fix plugins ownership
+  file:
+    path: /var/lib/jenkins/plugins
+    owner: jenkins
+    group: jenkins
+    recurse: yes
+    state: directory
+
+- name: Trigger plugin installation
+  shell: |
+    for plugin in configuration-as-code git workflow-aggregator job-dsl pipeline-utility-steps ansible; do
+      while [ ! -f "/var/lib/jenkins/plugins/${plugin}.jpi" ]; do
+        echo "Waiting for ${plugin} to be installed..."
+        sleep 10
+      done
+    done
+  args:
+    executable: /bin/bash
+  register: plugin_check
+  until: plugin_check.rc == 0
+  retries: 5
+  delay: 0
+
 
 - name: Create JCasC configuration directory
   file:
