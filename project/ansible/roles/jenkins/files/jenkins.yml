@@ -17,18 +17,18 @@ jenkins:
           home: /usr/bin/git
   jobs:
     - script: >
-        pipelineJob('Flask-App-Pipeline') {
+        pipelineJob('Flask') {
           definition {
             cpsScm {
               scm {
                 git {
                   remote {
-                    url('https://github.com/your/repo.git')
+                    url('https://github.com/nuclear77/theGP.git')
                   }
-                  branches('main')
+                  branches('*/main')
                 }
               }
-              scriptPath('Jenkinsfile')
+              scriptPath('project/jenkins/Jenkinsfile')
             }
           }
         }
