@@ -58,6 +58,10 @@
     owner: jenkins
     group: jenkins
     mode: '0644'
+  vars:
+    jenkins_admin_password: "{{ jenkins_admin_password }}"
+    telegram_bot_token: "{{ telegram_bot_token }}"
+    telegram_chat_id: "{{ telegram_chat_id }}"
 
 - name: Configure JCasC environment
   lineinfile:
