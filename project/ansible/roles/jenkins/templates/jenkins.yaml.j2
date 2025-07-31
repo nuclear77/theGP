@@ -5,7 +5,7 @@ jenkins:
       allowsSignup: false
       users:
         - id: admin
-          password: "{{ jenkins_admin_password }}"
+          password: {{ jenkins_admin_password_escaped }}
 
   authorizationStrategy:
     globalMatrix:
@@ -38,7 +38,7 @@ jenkins:
 
   jobs:
     - script: >
-        pipelineJob('Flask-App-Pipeline') {
+        pipelineJob('Flask') {
           definition {
             cpsScm {
               scm {

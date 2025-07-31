@@ -59,9 +59,9 @@
     group: jenkins
     mode: '0644'
   vars:
-    jenkins_admin_password: "{{ jenkins_admin_password }}"
-    telegram_bot_token: "{{ telegram_bot_token }}"
-    telegram_chat_id: "{{ telegram_chat_id }}"
+    jenkins_admin_password_escaped: "{{ jenkins_admin_password | string | to_json }}"
+    telegram_bot_token_escaped: "{{ telegram_bot_token | string | to_json }}"
+    telegram_chat_id_escaped: "{{ telegram_chat_id | string | to_json }}"
 
 - name: Configure JCasC environment
   lineinfile:

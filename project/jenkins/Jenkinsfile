@@ -82,16 +82,16 @@ pipeline {
                     string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID'),
                     string(credentialsId: 'jenkins-admin-password', variable: 'JENKINS_ADMIN_PASSWORD')
                 ]) {
-                sh "echo 'localhost ansible_connection=local' > ${WORKSPACE_PATH}/inventory.ini"
+                    sh """
+                    echo '[local]' > inventory.ini
+                    echo 'localhost ansible_connection=local' >> inventory.ini
 
-                sh """
-                ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
-                    -i inventory.ini \
-                    -i "localhost," \
-                    --connection=local\
-                    -e "telegram_bot_token=${BOT_TOKEN}" \
-                    -e "telegram_chat_id=${CHAT_ID}"
-                """
+                    ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
+                        -i inventory.ini \
+                        -e "telegram_bot_token=${BOT_TOKEN}" \
+                        -e "telegram_chat_id=${CHAT_ID}" \
+                        -e "jenkins_admin_password=${JENKINS_ADMIN_PASSWORD}"
+                    """
                 }
             }
         }
