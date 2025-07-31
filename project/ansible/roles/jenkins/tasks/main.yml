@@ -92,7 +92,7 @@
 - name: Wait for plugins to load
   wait_for:
     path: /var/lib/jenkins/plugins/{{ item }}.jpi
-    timeout: 120
+    timeout: 50
   loop:
     - configuration-as-code
     - git
