@@ -1,0 +1,12 @@
+---
+- name: restart jenkins
+  systemd:
+    name: jenkins
+    state: restarted
+
+- name: safe restart jenkins
+  community.general.jenkins_script:
+    script: "Jenkins.instance.restart()"
+    url: http://localhost:8080
+    wait: yes
+    timeout: 120

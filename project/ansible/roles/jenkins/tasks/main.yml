@@ -16,6 +16,14 @@
     state: present
     update_cache: yes
 
+- name: Disable initial setup wizard
+  lineinfile:
+    path: /etc/default/jenkins
+    regexp: "^JAVA_ARGS="
+    line: 'JAVA_ARGS="-Djenkins.install.runSetupWizard=false"'
+    state: present
+  notify: restart jenkins
+
 - name: Start Jenkins service
   systemd:
     name: jenkins
@@ -28,23 +36,38 @@
     delay: 10
     timeout: 120
 
-# при надобности раскомментить
-#- name: Install initial Jenkins plugins
-#  community.general.jenkins_plugin:
-#    name: "{{ item }}"
-#    state: present
-#  loop:
-#    - git
-#    - workflow-aggregator
-#    - job-dsl
-#    - pipeline-utility-steps
-#    - ansible
-#
-#- name: Create Jenkins job seed
-#  community.general.jenkins_job:
-#    name: "bootstrap-pipeline"
-#    config: "{{ lookup('file', 'templates/jenkins-job-seed.xml') }}"
-#    state: present
+- name: Install Jenkins plugins
+  community.general.jenkins_plugin:
+    name: "{{ item }}"
+    state: present
+    url: http://localhost:8080
+    timeout: 120
+  loop:
+    - git
+    - workflow-aggregator
+    - job-dsl
+    - pipeline-utility-steps
+    - ansible
+  register: plugins_result
+  until: plugins_result is succeeded
+  retries: 3
+  delay: 10
+  notify: safe restart jenkins
+
+- name: Check if flask job exists
+  community.general.jenkins_job_info:
+    name: "flask"
+    url: http://localhost:8080
+  register: job_check
+  ignore_errors: yes
+
+- name: Create flask job from template
+  community.general.jenkins_job:
+    name: "flask"
+    config: "{{ lookup('template', 'jenkins-job-seed.xml.j2') }}"
+    url: http://localhost:8080
+    timeout: 60
+  when: job_check is failed or job_check.jobs is not defined
 
 - name: Install system dependencies
   apt:
