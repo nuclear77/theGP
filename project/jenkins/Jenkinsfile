@@ -80,17 +80,24 @@ pipeline {
                 withCredentials([
                     string(credentialsId: 'telegram-bot-token', variable: 'BOT_TOKEN'),
                     string(credentialsId: 'telegram-chat-id', variable: 'CHAT_ID'),
-                    string(credentialsId: 'jenkins-admin-password', variable: 'JENKINS_ADMIN_PASSWORD')
+                    string(credentialsId: 'jenkins-admin-password', variable: 'JENKINS_ADMIN_PASSWORD'),
+                    string(credentialsId: 'ANSIBLE_VAULT_PASS', variable: 'VAULT_PASSWORD')
                 ]) {
                     sh """
                     echo '[local]' > inventory.ini
                     echo 'localhost ansible_connection=local' >> inventory.ini
 
+                    echo "$VAULT_PASSWORD" > vault_pass.txt
+                    chmod 600 vault_pass.txt
+
                     ansible-playbook ${WORKSPACE_PATH}/project/ansible/playbook.yml \
                         -i inventory.ini \
+                        --vault-password-file vault_pass.txt \
                         -e "telegram_bot_token=${BOT_TOKEN}" \
                         -e "telegram_chat_id=${CHAT_ID}" \
                         -e "jenkins_admin_password=${JENKINS_ADMIN_PASSWORD}"
+
+                    rm -f vault_pass.txt
                     """
                 }
             }
