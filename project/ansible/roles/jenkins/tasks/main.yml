@@ -27,88 +27,55 @@
     delay: 10
     timeout: 120
 
-- name: Install required plugins
-  community.general.jenkins_plugin:
-    name:
-      - configuration-as-code
-      - git
-      - workflow-aggregator
-      - ansible
-      - pipeline-utility-steps
-      - credentials-binding
-      - ws-cleanup
-    state: present
-  register: plugins_result
-  until: plugins_result is success
-  retries: 10
-  delay: 15
-
-- name: Create JCasC config directory
-  file:
-    path: /var/lib/jenkins/casc_configs
-    state: directory
-    owner: jenkins
-    group: jenkins
-    mode: '0755'
-
-- name: Deploy JCasC main configuration
-  template:
-    src: jenkins.yaml.j2
-    dest: /var/lib/jenkins/casc_configs/jenkins.yaml
-    owner: jenkins
-    group: jenkins
-    mode: '0644'
-  vars:
-    jenkins_admin_password_escaped: "{{ jenkins_admin_password | string | to_json }}"
-    telegram_bot_token_escaped: "{{ telegram_bot_token | string | to_json }}"
-    telegram_chat_id_escaped: "{{ telegram_chat_id | string | to_json }}"
-
-- name: Configure JCasC environment
-  lineinfile:
-    path: /etc/default/jenkins
-    regexp: '^CASC_JENKINS_CONFIG='
-    line: 'CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs/jenkins.yaml'
-    state: present
-    insertafter: EOF
-
-- name: Get Jenkins crumb (CSRF token)
+- name: Check if Flask job exists
   uri:
-    url: "http://localhost:8080/crumbIssuer/api/json"
+    url: "http://localhost:8080/job/flask/api/json"
     method: GET
-    user: "admin"
-    password: "{{ jenkins_admin_password }}"
-    force_basic_auth: yes
+    status_code: 200
     return_content: yes
-    status_code: 200
-  register: jenkins_crumb
-  until: jenkins_crumb.status == 200
-  retries: 5
-  delay: 5
-
-- name: Extract crumb token
-  set_fact:
-    crumb_token: "{{ jenkins_crumb.json.crumb }}"
-
-- name: Reload JCasC configuration via API
-  uri:
-    url: "http://localhost:8080/configuration-as-code/reload"
-    method: POST
-    user: "admin"
-    password: "{{ jenkins_admin_password }}"
-    force_basic_auth: yes
-    status_code: 200
     headers:
-      Jenkins-Crumb: "{{ crumb_token }}"
-  register: reload_result
-  until: reload_result.status == 200
-  retries: 5
-  delay: 10
+      Accept: "application/json"
+  register: job_check
+  ignore_errors: yes
+  changed_when: false
 
-- name: Wait for Jenkins after restart
-  wait_for:
-    port: 8080
-    delay: 10
-    timeout: 20
+- name: Apply Jenkins Configuration as Code
+  block:
+    - name: Install Jenkins Configuration as Code plugin
+      community.general.jenkins_plugin:
+        name: configuration-as-code
+        jenkins_home: /var/lib/jenkins
+        state: present
+
+    - name: Restart Jenkins to activate plugin
+      systemd:
+        name: jenkins
+        state: restarted
+
+    - name: Wait after restart
+      wait_for:
+        port: 8080
+        delay: 20
+        timeout: 180
+
+    - name: Copy JCasC configuration
+      copy:
+        src: jenkins.yaml
+        dest: /var/lib/jenkins/jenkins.yaml
+        owner: jenkins
+        group: jenkins
+        mode: "0644"
+
+    - name: Apply JCasC configuration via CLI
+      shell: |
+        curl -X POST http://localhost:8080/configuration-as-code/reload \
+          --user "admin:{{ jenkins_admin_password }}"
+      args:
+        executable: /bin/bash
+      register: casc_apply
+      changed_when: "'Configuration reloaded' in casc_apply.stdout"
+
+  when: job_check.status != 200 or job_check is failed
 
 - name: Install system dependencies
   apt:
@@ -116,16 +83,14 @@
       - python3-pip
       - python3-venv
       - git
-      - ansible
-      - curl
     state: present
 
 - name: Create app directory
   file:
     path: /opt/flask-app
     state: directory
-    owner: jenkins
-    group: jenkins
+    owner: root
+    group: root
     mode: '0755'
 
 - name: Create virtual environment
@@ -133,13 +98,9 @@
     python3 -m venv /opt/flask-app/venv
   args:
     executable: /bin/bash
-  become: yes
-  become_user: jenkins
 
 - name: Install Python requirements
   pip:
     requirements: /opt/flask-app/app/requirements.txt
     virtualenv: /opt/flask-app/venv
     virtualenv_python: python3
-  become: yes
-  become_user: jenkins
