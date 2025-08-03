@@ -10,25 +10,43 @@
 
 ---
 
-1. First step change directory
+~~~
+a little about my project: This project delivers end-to-end infrastructure automation
+using Ansible as the IaC backbone. It deploys Jenkins with JCasC (Configuration-as-Code)
+for zero-touch setup, establishes Prometheus/Alertmanager monitoring, and manages Flask
+applications. When code updates hit Git repositories, Jenkins auto-triggers pipelines that:
+pull the latest code → run linters and unit tests → execute Ansible playbooks for zero-downtime
+Flask redeploys → reconfigure monitoring → send Telegram deployment alerts via Alertmanager
+– creating a fully automated CI/CD loop with quality gates and real-time observability.
+~~~
+---
+
+## Hpw to install this project 
+
+1. First - copy project repository.
+
+```bash
+git clone https://github.com/nuclear77/theGP.git
+```
+2. Copy app repository.
+```bash
+git clone https://github.com/nuclear77/PG.git
+```
+
+3. Change working directory.
 
 ```bash
 cd ~/PycharmProjects/theGP/project/ansible
 ```
 
-2. launch project:
+4. Launch project:
 
 ```bash
 ansible-playbook playbook.yml -i inventori.ini --ask-vault-pass
 ```
 
-3. Receiving Jenkins admin password:
-
-```bash
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-```
-
 ---
+### application repository [on this link](https://github.com/nuclear77/PG) 
 
 ## Main paths
 
