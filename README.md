@@ -1,7 +1,7 @@
 ![logo](https://s3.amazonaws.com/vipm-io-media-files-production/media/package-list-images/7d7747a7-68b1-4cd7-9527-19eb96be9d7c.png)
 ## Graduation Project
 
-> - Technologies used:
+**Technologies used:**
 > - Flask
 > - Ansible
 > - Jenkins
