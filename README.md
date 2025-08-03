@@ -21,9 +21,9 @@ Flask redeploys → reconfigure monitoring → send Telegram deployment alerts v
 
 ---
 
-## How to install this project 
+## How to install project: 
 
-1. First - copy project repository.
+1. Copy project repository.
 
 ```bash
 git clone https://github.com/nuclear77/theGP.git
