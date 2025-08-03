@@ -55,4 +55,5 @@ ansible-playbook playbook.yml -i inventori.ini --ask-vault-pass
 | FLask app    | http://localhost:6060/ |
 | Jenkins      | http://localhost:8080/ |
 | Prometheus   | http://localhost:9090  |
+| Prometheus Alerts| http://localhost:9090/classic/alerts|
 | Alertmanager | http://localhost:9093/ |
