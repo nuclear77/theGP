@@ -21,7 +21,7 @@ Flask redeploys → reconfigure monitoring → send Telegram deployment alerts v
 ~~~
 ---
 
-## Hpw to install this project 
+## How to install this project 
 
 1. First - copy project repository.
 
