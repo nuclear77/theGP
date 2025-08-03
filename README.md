@@ -1,3 +1,4 @@
+![logo](https://s3.amazonaws.com/vipm-io-media-files-production/media/package-list-images/7d7747a7-68b1-4cd7-9527-19eb96be9d7c.png)
 ## Graduation Project
 
 > - Technologies used:
@@ -10,15 +11,14 @@
 
 ---
 
-~~~
-A little about my project: This project delivers end-to-end infrastructure automation
+___A little about my project: This project delivers end-to-end infrastructure automation
 using Ansible as the IaC backbone. It deploys Jenkins with JCasC (Configuration-as-Code)
 for zero-touch setup, establishes Prometheus/Alertmanager monitoring, and manages Flask
 applications. When code updates hit Git repositories, Jenkins auto-triggers pipelines that:
 pull the latest code → run linters and unit tests → execute Ansible playbooks for zero-downtime
 Flask redeploys → reconfigure monitoring → send Telegram deployment alerts via Alertmanager
-– creating a fully automated CI/CD loop with quality gates and real-time observability.
-~~~
+– creating a fully automated CI/CD loop with quality gates and real-time observability.___
+
 ---
 
 ## How to install this project 
