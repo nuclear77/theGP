@@ -11,7 +11,7 @@
 ---
 
 ~~~
-a little about my project: This project delivers end-to-end infrastructure automation
+A little about my project: This project delivers end-to-end infrastructure automation
 using Ansible as the IaC backbone. It deploys Jenkins with JCasC (Configuration-as-Code)
 for zero-touch setup, establishes Prometheus/Alertmanager monitoring, and manages Flask
 applications. When code updates hit Git repositories, Jenkins auto-triggers pipelines that:
