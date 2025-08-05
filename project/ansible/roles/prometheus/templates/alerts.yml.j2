@@ -1,26 +1,10 @@
 groups:
 - name: basic-alerts
   rules:
-  - alert: InstanceDown
-    expr: up == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Instance {{ labels.instance }} is down"
-
-  - alert: HighCpuLoad
-    expr: node_load1 > 4
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High CPU load ({{ value }}) on {{ labels.instance }}"
-
   - alert: LowDiskSpace
     expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.7
     for: 1m
     labels:
       severity: critical
     annotations:
-      summary: "Low disk space ({{ value }}) on {{ labels.instance }}"
+      summary: "Low disk space"
