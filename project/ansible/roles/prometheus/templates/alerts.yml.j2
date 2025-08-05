@@ -20,7 +20,7 @@ groups:
       summary: 'High CPU usage'
 
   - alert: HighMemoryUsage
-    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 25
     for: 10m
     labels:
       severity: warning
