@@ -39,8 +39,8 @@
     flask_port: "{{ flask_app_port | default('6060') }}"
 
 - name: Deploy alert rules
-  copy:
-    src: alerts.yml
+  template:
+    src: alerts.yml.j2
     dest: /etc/prometheus/alerts.yml
     owner: prometheus
     group: prometheus
