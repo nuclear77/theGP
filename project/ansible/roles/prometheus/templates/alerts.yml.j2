@@ -1,10 +1,12 @@
 groups:
-- name: basic-alerts
-  rules:
-  - alert: LowDiskSpace
-    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.7
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Low disk space"
+  - name: basic-alerts
+    rules:
+      - alert: LowDiskSpace
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.7
+        for: 1m
+        labels:
+          severity="critical"
+        annotations:
+          summary: "Low disk space"
+
+
