@@ -18,7 +18,7 @@ groups:
       summary: "High CPU load ({{ $value }}) on {{ $labels.instance }}"
 
   - alert: LowDiskSpace
-    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.2
+    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.7
     for: 10m
     labels:
       severity: critical
